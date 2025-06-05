@@ -171,3 +171,7 @@
     -fx-background-color: #1a1a1a;
     -fx-text-color: #ffffff;
 }
+
+.bottom {
+    display : none;
+}

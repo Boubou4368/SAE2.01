@@ -1,6 +1,5 @@
 package maquette.sae2_01;
-// ==========================================
-// BombermanController.java
+
 import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
