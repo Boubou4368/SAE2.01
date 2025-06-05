@@ -8,11 +8,20 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
+<?import javafx.scene.image.ImageView?>
 <BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="maquette.sae2_01.BombermanController">
     <top>
         <VBox styleClass="header-panel">
             <children>
                 <Label styleClass="game-title" text="BOMBERMAN" />
+                <HBox spacing="5" alignment="CENTER_LEFT">
+                    <ImageView fx:id="livesIcon" fitWidth="24" fitHeight="24" />
+                    <Label fx:id="livesLabel" text="x3" style="-fx-font-size: 16px; -fx-text-fill: white;" />
+                </HBox>
+                <HBox spacing="5" alignment="CENTER_LEFT">
+                    <ImageView fx:id="livesIcon2" fitWidth="24" fitHeight="24" />
+                    <Label fx:id="livesLabel2" text="x3" style="-fx-font-size: 16px; -fx-text-fill: white;" />
+                </HBox>
                 <HBox styleClass="stats-panel">
                     <children>
                         <VBox styleClass="stat-item">
