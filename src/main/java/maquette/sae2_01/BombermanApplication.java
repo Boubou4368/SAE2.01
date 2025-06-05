@@ -30,7 +30,7 @@ public class BombermanApplication extends Application {
         primaryStage.setTitle("Bomberman JavaFX - FXML Edition");
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
-        primaryStage.show();
+        primaryStage.show();//montre
 
         // Donner le focus au contrôleur pour la gestion des touches
         BombermanController controller = loader.getController();

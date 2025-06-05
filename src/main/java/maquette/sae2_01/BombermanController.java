@@ -257,7 +257,7 @@ public class BombermanController implements Initializable {
 
     private void gameOver() {
         if (gameLoop != null) {
-            gameLoop.stop();
+            gameLoop.stop();//arret
         }
 
         Platform.runLater(() -> {
