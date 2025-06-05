@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="maquette.sae2_01.BombermanController">
+    <top>
+        <VBox styleClass="header-panel">
+            <children>
+                <Label styleClass="game-title" text="BOMBERMAN" />
+                <HBox styleClass="stats-panel">
+                    <children>
+                        <VBox styleClass="stat-item">
+                            <children>
+                                <Label styleClass="stat-label" text="BOMBES" />
+                                <Label fx:id="bombsLabel" styleClass="stat-value" text="3" />
+                            </children>
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <VBox styleClass="stat-item">
+                            <children>
+                                <Label styleClass="stat-label" text="SCORE" />
+                                <Label fx:id="scoreLabel" styleClass="stat-value" text="0" />
+                            </children>
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <VBox styleClass="stat-item">
+                            <children>
+                                <Label styleClass="stat-label" text="NIVEAU" />
+                                <Label fx:id="levelLabel" styleClass="stat-value" text="1" />
+                            </children>
+                        </VBox>
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+    </top>
+    <center>
+        <VBox styleClass="game-panel">
+            <children>
+                <Canvas fx:id="gameCanvas" height="600.0" onKeyPressed="#handleKeyPressed" onKeyReleased="#handleKeyReleased" width="600.0" />
+            </children>
+        </VBox>
+    </center>
+    <bottom>
+        <VBox styleClass="controls-panel">
+            <children>
+                <Label styleClass="controls-title" text="CONTRÔLES" />
+                <HBox styleClass="controls-grid">
+                    <children>
+                        <VBox styleClass="control-group">
+                            <children>
+                                <Label styleClass="control-label" text="DÉPLACEMENT" />
+                                <Label styleClass="control-keys" text="↑ ↓ ← → ou ZQSD" />
+                            </children>
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <VBox styleClass="control-group">
+                            <children>
+                                <Label styleClass="control-label" text="BOMBE" />
+                                <Label styleClass="control-keys" text="ESPACE" />
+                            </children>
+                        </VBox>
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+    </bottom>
+</BorderPane>

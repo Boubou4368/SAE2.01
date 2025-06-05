@@ -11,6 +11,6 @@ module org.example.sae2_01 {
     requires eu.hansolo.tilesfx;
     requires com.almasb.fxgl.all;
 
-    opens org.example.sae2_01 to javafx.fxml;
-    exports org.example.sae2_01;
+    opens maquette.sae2_01 to javafx.fxml;
+    exports maquette.sae2_01;
 }
