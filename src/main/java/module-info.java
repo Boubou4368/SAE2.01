@@ -1,4 +1,4 @@
-module org.example.sae2_01 {
+module maquette.sae2_01 {
     requires javafx.controls;
     requires javafx.fxml;
     requires javafx.web;
@@ -10,6 +10,7 @@ module org.example.sae2_01 {
     requires org.kordamp.bootstrapfx.core;
     requires eu.hansolo.tilesfx;
     requires com.almasb.fxgl.all;
+    requires javafx.graphics;
 
     opens maquette.sae2_01 to javafx.fxml;
     exports maquette.sae2_01;
