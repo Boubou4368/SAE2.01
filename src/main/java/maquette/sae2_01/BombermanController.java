@@ -11,6 +11,21 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
 
+import javafx.application.Platform;
+import javafx.scene.layout.Pane;
+
+import javafx.scene.layout.StackPane;
+import javafx.geometry.Pos;
+import javafx.event.EventHandler;
+
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.control.Button;
+import javafx.scene.layout.VBox;
+import javafx.geometry.Pos;
+import javafx.stage.Stage;
+
+
 import java.net.URL;
 import java.util.*;
 
@@ -32,10 +47,16 @@ public class BombermanController implements Initializable {
     private long lastMoveTime = 0;
     private static final long MOVE_DELAY = 150_000_000; // 150ms en nanosecondes
 
+    private Stage primaryStage;
+    public void setPrimaryStage(Stage stage) {
+        this.primaryStage = stage;
+    }
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         gc = gameCanvas.getGraphicsContext2D();
         gameState = new GameState();
+        originalGameScene = gameCanvas.getScene();
 
         // Configurer le canvas pour recevoir les événements clavier
         gameCanvas.setFocusTraversable(true);
@@ -48,11 +69,11 @@ public class BombermanController implements Initializable {
         gameCanvas.requestFocus();
     }
 
-    @FXML
-    private void handleKeyPressed(KeyEvent event) {
-        pressedKeys.add(event.getCode());
-    }
 
+
+
+    @FXML
+    private void handleKeyPressed(KeyEvent event) {pressedKeys.add(event.getCode());}
     @FXML
     private void handleKeyReleased(KeyEvent event) {
         pressedKeys.remove(event.getCode());
@@ -84,6 +105,16 @@ public class BombermanController implements Initializable {
 
     private void handleInput(long currentTime) {
         // Vérifier si assez de temps s'est écoulé depuis le dernier mouvement
+        if (pressedKeys.contains(KeyCode.ESCAPE)) {
+            Platform.exit(); // Quitte proprement l'application
+            pressedKeys.remove(KeyCode.ESCAPE); // Pour ne pas quitter en boucle
+            return;
+        }
+        if (pressedKeys.contains(KeyCode.X)) {
+            restartGame(); // méthode déjà créée précédemment
+            pressedKeys.remove(KeyCode.X); // pour ne pas le relancer en boucle
+            return;
+        }
         if (currentTime - lastMoveTime < MOVE_DELAY) {
             // On peut quand même placer des bombes même si on ne peut pas bouger
             if (pressedKeys.contains(KeyCode.SPACE) && gameState.player.bombsRemaining > 0) {
@@ -228,8 +259,57 @@ public class BombermanController implements Initializable {
         if (gameLoop != null) {
             gameLoop.stop();
         }
-        // Ici vous pourriez afficher un écran de game over
+
+        Platform.runLater(() -> {
+            // Créer le label "GAME OVER"
+            Label gameOverLabel = new Label("GAME OVER");
+            gameOverLabel.setStyle("-fx-font-size: 64px; -fx-text-fill: red; -fx-font-weight: bold;");
+
+            // Bouton Rejouer
+            Button replayButton = new Button("Rejouer");
+            replayButton.setStyle("-fx-font-size: 20px;");
+            replayButton.setOnAction(e -> restartGame());
+
+            // Bouton Quitter
+            Button exitButton = new Button("Quitter");
+            exitButton.setStyle("-fx-font-size: 20px;");
+            exitButton.setOnAction(e -> Platform.exit());
+
+            // Organisation verticale
+            VBox vbox = new VBox(20, gameOverLabel, replayButton, exitButton);
+            vbox.setAlignment(Pos.CENTER);
+            vbox.setStyle("-fx-background-color: black;");
+            vbox.setPrefSize(800, 600); // adapte selon ton jeu
+
+            // Créer la scène Game Over
+            Scene gameOverScene = new Scene(vbox);
+
+            // Remplacer la scène actuelle par celle du Game Over
+            primaryStage.setScene(gameOverScene);
+        });
     }
+
+
+    private Scene originalGameScene;
+
+
+
+    private void restartGame() {
+        Platform.runLater(() -> {
+            try {
+                primaryStage.close(); // ← le stage est connu et non null
+                BombermanApplication newApp = new BombermanApplication();
+                Stage newStage = new Stage();
+                newApp.start(newStage);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+    }
+
+
+
+
 
     private void updateUI() {
         bombsLabel.setText("Bombes: " + gameState.player.bombsRemaining);

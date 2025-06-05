@@ -17,6 +17,9 @@ import java.util.HashSet;
 import java.util.ResourceBundle;
 import java.util.Set;
 
+
+
+
 public class BombermanApplication extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -31,7 +34,10 @@ public class BombermanApplication extends Application {
 
         // Donner le focus au contrôleur pour la gestion des touches
         BombermanController controller = loader.getController();
+        controller.setPrimaryStage(primaryStage); // transmet le stage
         controller.requestFocus();
+
+
     }
 
     public static void main(String[] args) {
