@@ -27,6 +27,7 @@ public class BombermanController implements Initializable {
     @FXML private ImageView livesIcon;
     @FXML private ImageView livesIcon2;
     @FXML private Label bonusLabel;
+    @FXML private ImageView titre;
 
     private static final int GRID_SIZE = 15;
     private static final int CELL_SIZE = 40;
@@ -40,9 +41,12 @@ public class BombermanController implements Initializable {
     private Image brickImage;
     private Image feuImage;
     private Image vitesseImage;
+    private Image kickImage;
     private Image bombeImage;
     private Image iconeImage;
     private Image skullImage;
+    private Image explosionGifImage; // Nouvelle image pour l'explosion
+    private Image fireball; // Nouvelle image pour blast
 
     private long lastMoveTimeP1 = 0;
     private long lastMoveTimeP2 = 0;
@@ -71,6 +75,12 @@ public class BombermanController implements Initializable {
         }
 
         try {
+            kickImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/kick.png"));
+        } catch (Exception e) {
+            System.err.println("Erreur lors du chargement de l'image kick.png: " + e.getMessage());
+        }
+
+        try {
             feuImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/feu.png"));
         } catch (Exception e) {
             System.err.println("Erreur lors du chargement de l'image feu.png: " + e.getMessage());
@@ -94,6 +104,19 @@ public class BombermanController implements Initializable {
             System.err.println("Erreur lors du chargement de l'image skull.png: " + e.getMessage());
         }
 
+        // Charger l'image d'explosion (GIF)
+        try {
+            explosionGifImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/explosion.gif"));
+        } catch (Exception e) {
+            System.err.println("Erreur lors du chargement de l'image explosion.gif: " + e.getMessage());
+        }
+
+        try {
+            fireball = new Image(getClass().getResourceAsStream("/maquette/sae2_01/blast.png"));
+        } catch (Exception e) {
+            System.err.println("Erreur lors du chargement de l'image explosion.gif: " + e.getMessage());
+        }
+
         try {
             iconeImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/icone.png"));
             if (livesIcon != null) {
@@ -109,6 +132,14 @@ public class BombermanController implements Initializable {
             }
         } catch (Exception e) {
             System.err.println("Erreur lors du chargement de l'image icone2.png: " + e.getMessage());
+        }
+        try {
+            iconeImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/titre.png"));
+            if (titre != null) {
+                titre.setImage(iconeImage);
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur lors du chargement de l'image titre.png: " + e.getMessage());
         }
     }
 
@@ -534,26 +565,38 @@ public class BombermanController implements Initializable {
             }
         }
 
-        // Explosions
+        // Explosions - Utiliser le GIF d'explosion
         for (Explosion explosion : gameState.explosions) {
-            double intensity = (double) explosion.timer / 30;
-            Color explosionColor = Color.web("#FF5722").interpolate(Color.web("#FFEB3B"), 1 - intensity);
-            gc.setFill(explosionColor);
+            if (fireball != null) {
+                // Utiliser l'image GIF d'explosion
+                gc.drawImage(fireball, explosion.pos.x * CELL_SIZE, explosion.pos.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+            } else {
+                // Fallback avec animation de couleur
+                double intensity = (double) explosion.timer / 30;
+                Color explosionColor = Color.web("#FF5722").interpolate(Color.web("#FFEB3B"), 1 - intensity);
+                gc.setFill(explosionColor);
 
-            double size = CELL_SIZE * (0.5 + 0.5 * intensity);
-            double offset = (CELL_SIZE - size) / 2;
-            gc.fillOval(explosion.pos.x * CELL_SIZE + offset, explosion.pos.y * CELL_SIZE + offset, size, size);
+                double size = CELL_SIZE * (0.5 + 0.5 * intensity);
+                double offset = (CELL_SIZE - size) / 2;
+                gc.fillOval(explosion.pos.x * CELL_SIZE + offset, explosion.pos.y * CELL_SIZE + offset, size, size);
+            }
         }
 
-        // Bombes
+        // Bombes - Remplacées par l'image de bombe statique
         for (Bomb bomb : gameState.bombs) {
-            boolean blink = bomb.timer < 60 && (bomb.timer / 10) % 2 == 0;
-            gc.setFill(blink ? Color.web("#F44336") : Color.web("#212121"));
-            gc.fillOval(bomb.pos.x * CELL_SIZE + 8, bomb.pos.y * CELL_SIZE + 8, CELL_SIZE - 16, CELL_SIZE - 16);
+            if (explosionGifImage != null) {
+                // Utiliser l'image de bombe statique
+                gc.drawImage(explosionGifImage, bomb.pos.x * CELL_SIZE, bomb.pos.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+            } else {
+                // Fallback avec animation clignotante (code original)
+                boolean blink = bomb.timer < 60 && (bomb.timer / 10) % 2 == 0;
+                gc.setFill(blink ? Color.web("#F44336") : Color.web("#212121"));
+                gc.fillOval(bomb.pos.x * CELL_SIZE + 8, bomb.pos.y * CELL_SIZE + 8, CELL_SIZE - 16, CELL_SIZE - 16);
 
-            // Mèche
-            gc.setFill(Color.web("#FF9800"));
-            gc.fillRect(bomb.pos.x * CELL_SIZE + CELL_SIZE/2 - 1, bomb.pos.y * CELL_SIZE + 5, 2, 8);
+                // Mèche
+                gc.setFill(Color.web("#FF9800"));
+                gc.fillRect(bomb.pos.x * CELL_SIZE + CELL_SIZE/2 - 1, bomb.pos.y * CELL_SIZE + 5, 2, 8);
+            }
         }
 
         // Joueur 1 (Bleu)
