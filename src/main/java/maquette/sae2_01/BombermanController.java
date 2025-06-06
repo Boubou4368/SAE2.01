@@ -15,6 +15,8 @@ import javafx.scene.paint.Color;
 import java.net.URL;
 import java.util.*;
 
+import static com.sun.scenario.effect.impl.prism.PrEffectHelper.render;
+
 public class BombermanController implements Initializable {
     @FXML private Canvas gameCanvas;
     @FXML private Label player1BombsLabel;
@@ -28,7 +30,7 @@ public class BombermanController implements Initializable {
     @FXML private ImageView livesIcon2;
     @FXML private Label bonusLabel;
     @FXML private ImageView titre;
-
+    @FXML private Label scoreLabel;
     private static final int GRID_SIZE = 15;
     private static final int CELL_SIZE = 40;
 
@@ -36,6 +38,8 @@ public class BombermanController implements Initializable {
     private GameState gameState;
     private Set<KeyCode> pressedKeys = new HashSet<>();
     private AnimationTimer gameLoop;
+    private static final long MOVE_DELAY_NS = 150_000_000; // 150ms en nanosecondes
+
 
     // Contrôle de la vitesse de déplacement pour chaque joueur
     private long[] lastMoveTimes = new long[4];
@@ -207,7 +211,7 @@ public class BombermanController implements Initializable {
         long lastMoveTime = lastMoveTimes[playerIndex];
 
         // Vérifier si assez de temps s'est écoulé depuis le dernier mouvement
-        if (currentTime - lastMoveTime < currentMoveDelay) {
+        if (currentTime - lastMoveTime < MOVE_DELAY_NS) {
             // On peut quand même placer des bombes même si on ne peut pas bouger
             checkBombPlacement(player, playerIndex);
             return;
@@ -327,13 +331,14 @@ public class BombermanController implements Initializable {
         }
 
         // Vérifier que les joueurs ne se chevauchent pas
-        if (pos.equals(gameState.player1.pos) || pos.equals(gameState.player2.pos)) {
-            return false;
+        for (Player player : gameState.players) {
+            if (player.isAlive && pos.equals(player.pos)) {
+                return false;
+            }
         }
 
         return true;
     }
-
 
     private void placeBomb(Player player, int playerNumber) {
         Position bombPos = new Position(player.pos.x, player.pos.y);
@@ -396,7 +401,7 @@ public class BombermanController implements Initializable {
                 // Vérifier si c'est un mur destructible
                 if (gameState.destructibleWalls.contains(explPos)) {
                     gameState.destructibleWalls.remove(explPos);
-                    bomb.owner.score += 10;
+                    bomb.owner += 10;
 
                     // Révéler l'objet s'il y en a un
                     Item hiddenItem = gameState.hiddenItems.get(explPos);
@@ -472,13 +477,45 @@ public class BombermanController implements Initializable {
     }
 
     private void updateUI() {
-
+        // Mise à jour des labels de bombes pour tous les joueurs
         Label[] bombsLabels = {player1BombsLabel, player2BombsLabel, player3BombsLabel, player4BombsLabel};
 
         for (int i = 0; i < 4; i++) {
             if (bombsLabels[i] != null) {
                 bombsLabels[i].setText("Bombes: " + gameState.players[i].bombsRemaining);
             }
+        }
+
+        // Mise à jour du score (ajoutez scoreLabel dans votre FXML)
+        if (scoreLabel != null) {
+            scoreLabel.setText("J1 Score: " + gameState.players[0].score + " | J2 Score: " + gameState.players[1].score);
+        }
+
+        if (levelLabel != null) {
+            levelLabel.setText("Niveau: " + gameState.level);
+        }
+
+        // Affichage des vies
+        if (livesLabel != null) {
+            livesLabel.setText("x" + gameState.players[0].lives);
+        }
+
+        if (livesLabel2 != null) {
+            livesLabel2.setText("x" + gameState.players[1].lives);
+        }
+
+        // Affichage des bonus
+        if (bonusLabel != null) {
+            String bonusText = String.format("J1 - Feu: %d | Vitesse: %d | Bombe: %d || J2 - Feu: %d | Vitesse: %d | Bombe: %d",
+                    gameState.players[0].feuBonusCount,
+                    gameState.players[0].vitesseBonusCount,
+                    gameState.players[0].bombeBonusCount,
+                    gameState.players[1].feuBonusCount,
+                    gameState.players[1].vitesseBonusCount,
+                    gameState.players[1].bombeBonusCount);
+            bonusLabel.setText(bonusText);
+        }
+    }
 
     private void resetPlayerBonuses(Player player) {
         // Réinitialiser tous les bonus aux valeurs par défaut
@@ -493,15 +530,17 @@ public class BombermanController implements Initializable {
         player.bombeBonusCount = 0;
     }
 
+    // Correction de la méthode checkItemPickup
     private void checkItemPickup() {
-        // Vérifier pour le joueur 1
-        checkItemPickupForPlayer(gameState.player1);
-
-        // Vérifier pour le joueur 2
-        checkItemPickupForPlayer(gameState.player2);
+        // Vérifier pour tous les joueurs
+        for (int i = 0; i < 4; i++) {
+            checkItemPickupForPlayer(gameState.players[i], i);
+        }
     }
 
-    private void checkItemPickupForPlayer(Player player) {
+    private void checkItemPickupForPlayer(Player player, int playerIndex) {
+        if (!player.isAlive) return;
+
         Item item = gameState.visibleItems.get(player.pos);
         if (item != null) {
             // Appliquer l'effet de l'objet
@@ -523,15 +562,13 @@ public class BombermanController implements Initializable {
                     player.score += 40;
                     break;
                 case SKULL:
-                    // Le skull fait perdre une vie au joueur
                     player.lives--;
                     if (player.lives <= 0) {
-                        String winner = (player == gameState.player1) ? "Joueur 2 gagne !" : "Joueur 1 gagne !";
-                        gameOver(winner);
+                        player.isAlive = false;
+                        checkGameOver();
                     } else {
                         resetPlayerBonuses(player);
-                        int playerNumber = (player == gameState.player1) ? 1 : 2;
-                        respawnPlayer(player, playerNumber);
+                        respawnPlayer(player, playerIndex);
                     }
                     break;
             }
@@ -541,13 +578,6 @@ public class BombermanController implements Initializable {
         }
     }
 
-    private void respawnPlayer(Player player, int playerNumber) {
-        if (playerNumber == 1) {
-            player.pos = new Position(1, 1);
-        } else {
-            player.pos = new Position(GRID_SIZE - 2, GRID_SIZE - 2);
-        }
-    }
 
     private void gameOver(String message) {
         if (gameLoop != null) {
@@ -557,34 +587,6 @@ public class BombermanController implements Initializable {
         // Ici vous pourriez afficher un écran de game over avec le message
     }
 
-    private void updateUI() {
-        // UI pour le joueur 1
-        bombsLabel.setText("J1 Bombes: " + gameState.player1.bombsRemaining + "/" + gameState.player1.maxBombs);
-        scoreLabel.setText("J1 Score: " + gameState.player1.score + " | J2 Score: " + gameState.player2.score);
-        levelLabel.setText("Niveau: " + gameState.level);
-
-        // Afficher le nombre de vies pour chaque joueur
-        if (livesLabel != null) {
-            livesLabel.setText("x" + gameState.player1.lives);
-        }
-
-        if (livesLabel2 != null) {
-            livesLabel2.setText("x" + gameState.player2.lives);
-        }
-
-        // Afficher les bonus actuels pour les deux joueurs
-        if (bonusLabel != null) {
-            String bonusText = String.format("J1 - Feu: %d | Vitesse: %d | Bombe: %d || J2 - Feu: %d | Vitesse: %d | Bombe: %d",
-                    gameState.player1.feuBonusCount,
-                    gameState.player1.vitesseBonusCount,
-                    gameState.player1.bombeBonusCount,
-                    gameState.player2.feuBonusCount,
-                    gameState.player2.vitesseBonusCount,
-                    gameState.player2.bombeBonusCount);
-            bonusLabel.setText(bonusText);
-
-        }
-    }
 
     private void render() {
         // Fond
@@ -735,17 +737,6 @@ public class BombermanController implements Initializable {
             }
         }
 
-        // Joueur 1 (Bleu)
-        gc.setFill(Color.web("#2196F3"));
-        gc.fillOval(gameState.player1.pos.x * CELL_SIZE + 5, gameState.player1.pos.y * CELL_SIZE + 5, CELL_SIZE - 10, CELL_SIZE - 10);
-        gc.setFill(Color.web("#64B5F6"));
-        gc.fillOval(gameState.player1.pos.x * CELL_SIZE + 8, gameState.player1.pos.y * CELL_SIZE + 8, 8, 8);
-
-        // Joueur 2 (Rouge)
-        gc.setFill(Color.web("#F44336"));
-        gc.fillOval(gameState.player2.pos.x * CELL_SIZE + 5, gameState.player2.pos.y * CELL_SIZE + 5, CELL_SIZE - 10, CELL_SIZE - 10);
-        gc.setFill(Color.web("#EF5350"));
-        gc.fillOval(gameState.player2.pos.x * CELL_SIZE + 8, gameState.player2.pos.y * CELL_SIZE + 8, 8, 8);
     }
 
     // Énumération pour les types d'objets
@@ -811,37 +802,42 @@ public class BombermanController implements Initializable {
     }
 
     static class GameState {
-
         Player[] players = new Player[4];
-
         List<Bomb> bombs = new ArrayList<>();
         List<Explosion> explosions = new ArrayList<>();
         Set<Position> walls = new HashSet<>();
         Set<Position> destructibleWalls = new HashSet<>();
-
-
-
-        GameState() {
-            // Positions de départ aux 4 coins
-            players[0] = new Player(1, 1);                      // Coin supérieur gauche
-            players[1] = new Player(GRID_SIZE - 2, GRID_SIZE - 2); // Coin inférieur droit
-            players[2] = new Player(1, GRID_SIZE - 2);           // Coin inférieur gauche
-            players[3] = new Player(GRID_SIZE - 2, 1);           // Coin supérieur droit
         Map<Position, Item> hiddenItems = new HashMap<>();
         Map<Position, Item> visibleItems = new HashMap<>();
         int level = 1;
 
+        GameState() {
+            // Positions de départ aux 4 coins
+            players[0] = new Player(1, 1);                          // Joueur 1
+            players[1] = new Player(GRID_SIZE - 2, GRID_SIZE - 2);   // Joueur 2
+            players[2] = new Player(1, GRID_SIZE - 2);               // Joueur 3
+            players[3] = new Player(GRID_SIZE - 2, 1);               // Joueur 4
+
             initializeMap();
         }
 
-        private void initializeMap() {
-            // Créer les murs fixes
+        // Méthodes d'accès pour compatibilité
+        public Player getPlayer1() { return players[0]; }
+        public Player getPlayer2() { return players[1]; }
+        public Player getPlayer3() { return players[2]; }
+        public Player getPlayer4() { return players[3]; }
 
+        // DÉPLACER CES MÉTHODES DANS GameState
+        private void initializeMap() {
+            // Créer les murs fixes (bordures et colonnes/lignes paires)
             for (int i = 0; i < GRID_SIZE; i++) {
                 for (int j = 0; j < GRID_SIZE; j++) {
+                    // Murs de bordure
                     if (i == 0 || i == GRID_SIZE - 1 || j == 0 || j == GRID_SIZE - 1) {
                         walls.add(new Position(i, j));
-                    } else if (i % 2 == 0 && j % 2 == 0) {
+                    }
+                    // Murs internes (grille)
+                    else if (i % 2 == 0 && j % 2 == 0) {
                         walls.add(new Position(i, j));
                     }
                 }
@@ -849,19 +845,16 @@ public class BombermanController implements Initializable {
 
             // Créer les murs destructibles
             List<Position> availablePositions = new ArrayList<>();
-
             Random random = new Random();
 
             for (int i = 1; i < GRID_SIZE - 1; i++) {
                 for (int j = 1; j < GRID_SIZE - 1; j++) {
                     Position pos = new Position(i, j);
 
-                    if (!walls.contains(pos) &&
-                            !isStartingArea(pos) &&
-                            random.nextDouble() < 0.3) {
+                    // Vérifier que la position n'est pas un mur fixe et n'est pas dans une zone de départ
+                    if (!walls.contains(pos) && !isStartingArea(pos) && random.nextDouble() < 0.3) {
                         destructibleWalls.add(pos);
                         availablePositions.add(pos);
-
                     }
                 }
             }
@@ -871,11 +864,17 @@ public class BombermanController implements Initializable {
         }
 
         private boolean isStartingArea(Position pos) {
-            // Zone de départ joueur 1 (coin haut-gauche)
+            // Zone de départ joueur 1 (coin haut-gauche) - 3x3
             if (pos.x <= 2 && pos.y <= 2) return true;
 
-            // Zone de départ joueur 2 (coin bas-droite)
+            // Zone de départ joueur 2 (coin bas-droite) - 3x3
             if (pos.x >= GRID_SIZE - 3 && pos.y >= GRID_SIZE - 3) return true;
+
+            // Zone de départ joueur 3 (coin bas-gauche) - 3x3
+            if (pos.x <= 2 && pos.y >= GRID_SIZE - 3) return true;
+
+            // Zone de départ joueur 4 (coin haut-droite) - 3x3
+            if (pos.x >= GRID_SIZE - 3 && pos.y <= 2) return true;
 
             return false;
         }
@@ -883,11 +882,13 @@ public class BombermanController implements Initializable {
         private void placeItems(List<Position> availablePositions, Random random) {
             if (availablePositions.size() < 17) {
                 System.err.println("Pas assez de murs destructibles pour placer tous les objets");
+                System.err.println("Positions disponibles: " + availablePositions.size() + ", requis: 17");
+                // Réduire le nombre d'objets si nécessaire
+                placeReducedItems(availablePositions, random);
                 return;
             }
 
             Collections.shuffle(availablePositions, random);
-
             int index = 0;
 
             // Placer 4 objets feu
@@ -911,12 +912,46 @@ public class BombermanController implements Initializable {
             }
         }
 
-        private boolean isInSafeZone(int x, int y) {
-            // Zones de sécurité 2x2 pour chaque joueur
-            return (x <= 2 && y <= 2) ||                           // Joueur 1
-                    (x >= GRID_SIZE - 3 && y >= GRID_SIZE - 3) ||    // Joueur 2
-                    (x <= 2 && y >= GRID_SIZE - 3) ||                // Joueur 3
-                    (x >= GRID_SIZE - 3 && y <= 2);                  // Joueur 4
+        private void placeReducedItems(List<Position> availablePositions, Random random) {
+            Collections.shuffle(availablePositions, random);
+            int index = 0;
+            int itemsPerType = Math.max(1, availablePositions.size() / 4);
+
+            // Placer des objets proportionnellement au nombre de positions disponibles
+            for (int i = 0; i < itemsPerType && index < availablePositions.size(); i++, index++) {
+                hiddenItems.put(availablePositions.get(index), new Item(ItemType.FEU));
+            }
+            for (int i = 0; i < itemsPerType && index < availablePositions.size(); i++, index++) {
+                hiddenItems.put(availablePositions.get(index), new Item(ItemType.VITESSE));
+            }
+            for (int i = 0; i < itemsPerType && index < availablePositions.size(); i++, index++) {
+                hiddenItems.put(availablePositions.get(index), new Item(ItemType.BOMBE));
+            }
+            // Placer un skull si il reste de la place
+            if (index < availablePositions.size()) {
+                hiddenItems.put(availablePositions.get(index), new Item(ItemType.SKULL));
+            }
+        }
+
+        // Méthode utilitaire pour déboguer
+        public void printMapInfo() {
+            System.out.println("=== INFO MAP ===");
+            System.out.println("Murs fixes: " + walls.size());
+            System.out.println("Murs destructibles: " + destructibleWalls.size());
+            System.out.println("Objets cachés: " + hiddenItems.size());
+            System.out.println("Objets visibles: " + visibleItems.size());
+
+            // Compter les types d'objets
+            Map<ItemType, Integer> itemCount = new HashMap<>();
+            for (Item item : hiddenItems.values()) {
+                itemCount.put(item.type, itemCount.getOrDefault(item.type, 0) + 1);
+            }
+            System.out.println("Répartition des objets:");
+            for (Map.Entry<ItemType, Integer> entry : itemCount.entrySet()) {
+                System.out.println("  " + entry.getKey() + ": " + entry.getValue());
+            }
+            System.out.println("================");
         }
     }
+
 }
