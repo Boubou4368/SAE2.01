@@ -161,7 +161,7 @@
 }
 
 .game-win {
-    -fx-background-color: rgba(76, 175, 80, 0.8);
+    -fx-background-color: rgbargba(76, 175, 80, 0.8);
 }
 
 /* Styles spécifiques aux joueurs */
