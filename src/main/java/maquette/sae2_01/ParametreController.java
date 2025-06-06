@@ -9,7 +9,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 
 
-public class MenuController {
+public class ParametreController {
 
     @FXML
     private Label titleLabel;
@@ -18,7 +18,7 @@ public class MenuController {
     public void initialize() {
         titleLabel.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
-                newScene.getStylesheets().add(getClass().getResource("menu.css").toExternalForm());
+                newScene.getStylesheets().add(getClass().getResource("parametre.css").toExternalForm());
             }
         });
     }
@@ -46,9 +46,9 @@ public class MenuController {
     }
 
     @FXML
-    private void onParametre(ActionEvent event) {
+    private void onQuit(ActionEvent event) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("parametre.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("menu.fxml"));
             Scene gameScene = new Scene(loader.load());
 
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
@@ -65,8 +65,4 @@ public class MenuController {
         }
     }
 
-    @FXML
-    private void onQuit(ActionEvent event) {
-        System.exit(0);
-    }
 }
