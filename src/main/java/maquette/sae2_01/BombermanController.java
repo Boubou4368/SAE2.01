@@ -14,10 +14,11 @@ import java.net.URL;
 import java.util.*;
 
 public class BombermanController implements Initializable {
-    @FXML
-    private Canvas gameCanvas;
-    @FXML private Label bombsLabel;
-    @FXML private Label scoreLabel;
+    @FXML private Canvas gameCanvas;
+    @FXML private Label player1BombsLabel;
+    @FXML private Label player2BombsLabel;
+    @FXML private Label player3BombsLabel;
+    @FXML private Label player4BombsLabel;
     @FXML private Label levelLabel;
 
     private static final int GRID_SIZE = 15;
@@ -28,7 +29,8 @@ public class BombermanController implements Initializable {
     private Set<KeyCode> pressedKeys = new HashSet<>();
     private AnimationTimer gameLoop;
 
-    private long lastMoveTime = 0;
+    // Contrôle de la vitesse de déplacement pour chaque joueur
+    private long[] lastMoveTimes = new long[4];
     private static final long MOVE_DELAY = 150_000_000; // 150ms en nanosecondes
 
     @Override
@@ -82,41 +84,123 @@ public class BombermanController implements Initializable {
     }
 
     private void handleInput(long currentTime) {
+        // Gestion du joueur 1 (Flèches + Entrée)
+        handlePlayerInput(currentTime, gameState.players[0], 0);
+
+        // Gestion du joueur 2 (ZQSD + Espace)
+        handlePlayerInput(currentTime, gameState.players[1], 1);
+
+        // Gestion du joueur 3 (IJKL + U)
+        handlePlayerInput(currentTime, gameState.players[2], 2);
+
+        // Gestion du joueur 4 (Pavé numérique 8456 + 0)
+        handlePlayerInput(currentTime, gameState.players[3], 3);
+    }
+
+    private void handlePlayerInput(long currentTime, Player player, int playerIndex) {
+        if (!player.isAlive) return;
+
+        long lastMoveTime = lastMoveTimes[playerIndex];
+
         // Vérifier si assez de temps s'est écoulé depuis le dernier mouvement
         if (currentTime - lastMoveTime < MOVE_DELAY) {
             // On peut quand même placer des bombes même si on ne peut pas bouger
-            if (pressedKeys.contains(KeyCode.SPACE) && gameState.player.bombsRemaining > 0) {
-                placeBomb();
-                pressedKeys.remove(KeyCode.SPACE);
-            }
+            checkBombPlacement(player, playerIndex);
             return;
         }
 
-        Position newPos = new Position(gameState.player.pos.x, gameState.player.pos.y);
+        Position newPos = new Position(player.pos.x, player.pos.y);
         boolean moved = false;
 
-        if (pressedKeys.contains(KeyCode.UP) || pressedKeys.contains(KeyCode.Z)) {
-            newPos.y--;
-            moved = true;
-        } else if (pressedKeys.contains(KeyCode.DOWN) || pressedKeys.contains(KeyCode.S)) {
-            newPos.y++;
-            moved = true;
-        } else if (pressedKeys.contains(KeyCode.LEFT) || pressedKeys.contains(KeyCode.Q)) {
-            newPos.x--;
-            moved = true;
-        } else if (pressedKeys.contains(KeyCode.RIGHT) || pressedKeys.contains(KeyCode.D)) {
-            newPos.x++;
-            moved = true;
+        // Contrôles spécifiques à chaque joueur
+        switch (playerIndex) {
+            case 0: // Joueur 1 : ZQSD
+                if (pressedKeys.contains(KeyCode.Z)) {
+                    newPos.y--;
+                    moved = true;
+                } else if (pressedKeys.contains(KeyCode.S)) {
+                    newPos.y++;
+                    moved = true;
+                } else if (pressedKeys.contains(KeyCode.Q)) {
+                    newPos.x--;
+                    moved = true;
+                } else if (pressedKeys.contains(KeyCode.D)) {
+                    newPos.x++;
+                    moved = true;
+                }
+                break;
+
+            case 1: // Joueur 2 : Flèches
+                if (pressedKeys.contains(KeyCode.UP)) {
+                    newPos.y--;
+                    moved = true;
+                } else if (pressedKeys.contains(KeyCode.DOWN)) {
+                    newPos.y++;
+                    moved = true;
+                } else if (pressedKeys.contains(KeyCode.LEFT)) {
+                    newPos.x--;
+                    moved = true;
+                } else if (pressedKeys.contains(KeyCode.RIGHT)) {
+                    newPos.x++;
+                    moved = true;
+                }
+                break;
+
+            case 2: // Joueur 3 : OKLM
+                if (pressedKeys.contains(KeyCode.O)) {
+                    newPos.y--;
+                    moved = true;
+                } else if (pressedKeys.contains(KeyCode.L)) {
+                    newPos.y++;
+                    moved = true;
+                } else if (pressedKeys.contains(KeyCode.K)) {
+                    newPos.x--;
+                    moved = true;
+                } else if (pressedKeys.contains(KeyCode.M)) {
+                    newPos.x++;
+                    moved = true;
+                }
+                break;
+
+            case 3: // Joueur 4 : TFGH
+                if (pressedKeys.contains(KeyCode.T)) {
+                    newPos.y--;
+                    moved = true;
+                } else if (pressedKeys.contains(KeyCode.G)) {
+                    newPos.y++;
+                    moved = true;
+                } else if (pressedKeys.contains(KeyCode.F)) {
+                    newPos.x--;
+                    moved = true;
+                } else if (pressedKeys.contains(KeyCode.H)) {
+                    newPos.x++;
+                    moved = true;
+                }
+                break;
         }
 
         if (moved && canMoveTo(newPos)) {
-            gameState.player.pos = newPos;
-            lastMoveTime = currentTime; // Mettre à jour le temps du dernier mouvement
+            player.pos = newPos;
+            lastMoveTimes[playerIndex] = currentTime;
         }
 
-        if (pressedKeys.contains(KeyCode.SPACE) && gameState.player.bombsRemaining > 0) {
-            placeBomb();
-            pressedKeys.remove(KeyCode.SPACE);
+        // Placement de bombes
+        checkBombPlacement(player, playerIndex);
+    }
+
+    private void checkBombPlacement(Player player, int playerIndex) {
+        KeyCode bombKey = null;
+
+        switch (playerIndex) {
+            case 0: bombKey = KeyCode.E; break;
+            case 1: bombKey = KeyCode.ENTER; break;
+            case 2: bombKey = KeyCode.P; break;
+            case 3: bombKey = KeyCode.Y; break;
+        }
+
+        if (pressedKeys.contains(bombKey) && player.bombsRemaining > 0) {
+            placeBomb(player, playerIndex + 1);
+            pressedKeys.remove(bombKey);
         }
     }
 
@@ -138,8 +222,8 @@ public class BombermanController implements Initializable {
         return true;
     }
 
-    private void placeBomb() {
-        Position bombPos = new Position(gameState.player.pos.x, gameState.player.pos.y);
+    private void placeBomb(Player player, int playerNumber) {
+        Position bombPos = new Position(player.pos.x, player.pos.y);
 
         for (Bomb bomb : gameState.bombs) {
             if (bomb.pos.equals(bombPos)) {
@@ -147,8 +231,8 @@ public class BombermanController implements Initializable {
             }
         }
 
-        gameState.bombs.add(new Bomb(bombPos.x, bombPos.y));
-        gameState.player.bombsRemaining--;
+        gameState.bombs.add(new Bomb(bombPos.x, bombPos.y, playerNumber));
+        player.bombsRemaining--;
     }
 
     private void updateBombs() {
@@ -161,13 +245,16 @@ public class BombermanController implements Initializable {
             if (bomb.timer <= 0) {
                 explodeBomb(bomb);
                 bombIterator.remove();
-                gameState.player.bombsRemaining++;
+                // Rendre la bombe au bon joueur
+                if (bomb.owner >= 1 && bomb.owner <= 4) {
+                    gameState.players[bomb.owner - 1].bombsRemaining++;
+                }
             }
         }
     }
 
     private void explodeBomb(Bomb bomb) {
-        int range = gameState.player.bombRange;
+        int range = gameState.players[bomb.owner - 1].bombRange;
 
         gameState.explosions.add(new Explosion(bomb.pos.x, bomb.pos.y));
 
@@ -191,7 +278,6 @@ public class BombermanController implements Initializable {
 
                 if (gameState.destructibleWalls.contains(explPos)) {
                     gameState.destructibleWalls.remove(explPos);
-                    gameState.score += 10;
                     break;
                 }
             }
@@ -207,33 +293,67 @@ public class BombermanController implements Initializable {
 
     private void checkPlayerHit() {
         for (Explosion explosion : gameState.explosions) {
-            if (explosion.pos.equals(gameState.player.pos)) {
-                gameState.player.lives--;
-                if (gameState.player.lives <= 0) {
-                    gameOver();
-                } else {
-                    respawnPlayer();
+            for (int i = 0; i < 4; i++) {
+                Player player = gameState.players[i];
+                if (player.isAlive && explosion.pos.equals(player.pos)) {
+                    player.lives--;
+                    if (player.lives <= 0) {
+                        player.isAlive = false;
+                        checkGameOver();
+                    } else {
+                        respawnPlayer(player, i);
+                    }
                 }
-                break;
             }
         }
     }
 
-    private void respawnPlayer() {
-        gameState.player.pos = new Position(1, 1);
+    private void respawnPlayer(Player player, int playerIndex) {
+        Position[] spawnPositions = {
+                new Position(1, 1),                             // Joueur 1
+                new Position(GRID_SIZE - 2, GRID_SIZE - 2),     // Joueur 2
+                new Position(1, GRID_SIZE - 2),                 // Joueur 3
+                new Position(GRID_SIZE - 2, 1)                  // Joueur 4
+        };
+        player.pos = spawnPositions[playerIndex];
     }
 
-    private void gameOver() {
+    private void checkGameOver() {
+        int alivePlayers = 0;
+        int winner = -1;
+
+        for (int i = 0; i < 4; i++) {
+            if (gameState.players[i].isAlive) {
+                alivePlayers++;
+                winner = i + 1;
+            }
+        }
+
+        if (alivePlayers <= 1) {
+            gameOver(winner);
+        }
+    }
+
+    private void gameOver(int winner) {
         if (gameLoop != null) {
             gameLoop.stop();
         }
-        // Ici vous pourriez afficher un écran de game over
+        if (winner > 0) {
+            System.out.println("Joueur " + winner + " gagne !");
+        } else {
+            System.out.println("Match nul !");
+        }
     }
 
     private void updateUI() {
-        bombsLabel.setText("Bombes: " + gameState.player.bombsRemaining);
-        scoreLabel.setText("Score: " + gameState.score);
-        levelLabel.setText("Niveau: " + gameState.level);
+
+        Label[] bombsLabels = {player1BombsLabel, player2BombsLabel, player3BombsLabel, player4BombsLabel};
+
+        for (int i = 0; i < 4; i++) {
+            if (bombsLabels[i] != null) {
+                bombsLabels[i].setText("Bombes: " + gameState.players[i].bombsRemaining);
+            }
+        }
     }
 
     private void render() {
@@ -283,23 +403,58 @@ public class BombermanController implements Initializable {
             gc.fillOval(explosion.pos.x * CELL_SIZE + offset, explosion.pos.y * CELL_SIZE + offset, size, size);
         }
 
-        // Bombes avec animation de clignotement
+        // Bombes avec animation de clignotement et couleurs par joueur
         for (Bomb bomb : gameState.bombs) {
             boolean blink = bomb.timer < 60 && (bomb.timer / 10) % 2 == 0;
-            gc.setFill(blink ? Color.web("#F44336") : Color.web("#212121"));
+
+            Color[] bombColors = {
+                    blink ? Color.web("#2196F3") : Color.web("#1976D2"), // Bleu (Joueur 1)
+                    blink ? Color.web("#F44336") : Color.web("#D32F2F"), // Rouge (Joueur 2)
+                    blink ? Color.web("#4CAF50") : Color.web("#388E3C"), // Vert (Joueur 3)
+                    blink ? Color.web("#FF9800") : Color.web("#F57C00")  // Orange (Joueur 4)
+            };
+
+            Color bombColor = bombColors[bomb.owner - 1];
+            gc.setFill(bombColor);
             gc.fillOval(bomb.pos.x * CELL_SIZE + 8, bomb.pos.y * CELL_SIZE + 8, CELL_SIZE - 16, CELL_SIZE - 16);
 
             // Mèche
-            gc.setFill(Color.web("#FF9800"));
+            gc.setFill(Color.web("#FFEB3B"));
             gc.fillRect(bomb.pos.x * CELL_SIZE + CELL_SIZE/2 - 1, bomb.pos.y * CELL_SIZE + 5, 2, 8);
         }
 
-        // Joueur avec dégradé
-        gc.setFill(Color.web("#2196F3"));
-        gc.fillOval(gameState.player.pos.x * CELL_SIZE + 5, gameState.player.pos.y * CELL_SIZE + 5, CELL_SIZE - 10, CELL_SIZE - 10);
-        // Highlight
-        gc.setFill(Color.web("#64B5F6"));
-        gc.fillOval(gameState.player.pos.x * CELL_SIZE + 8, gameState.player.pos.y * CELL_SIZE + 8, 8, 8);
+        // Couleurs des joueurs
+        Color[] playerColors = {
+                Color.web("#2196F3"), // Bleu (Joueur 1)
+                Color.web("#F44336"), // Rouge (Joueur 2)
+                Color.web("#4CAF50"), // Vert (Joueur 3)
+                Color.web("#FF9800")  // Orange (Joueur 4)
+        };
+
+        Color[] highlightColors = {
+                Color.web("#64B5F6"), // Bleu clair
+                Color.web("#EF5350"), // Rouge clair
+                Color.web("#81C784"), // Vert clair
+                Color.web("#FFB74D")  // Orange clair
+        };
+
+        // Affichage des joueurs
+        for (int i = 0; i < 4; i++) {
+            Player player = gameState.players[i];
+            if (player.isAlive) {
+                // Corps du joueur
+                gc.setFill(playerColors[i]);
+                gc.fillOval(player.pos.x * CELL_SIZE + 5, player.pos.y * CELL_SIZE + 5, CELL_SIZE - 10, CELL_SIZE - 10);
+
+                // Highlight
+                gc.setFill(highlightColors[i]);
+                gc.fillOval(player.pos.x * CELL_SIZE + 8, player.pos.y * CELL_SIZE + 8, 8, 8);
+
+                // Numéro du joueur
+                gc.setFill(Color.WHITE);
+                gc.fillText(String.valueOf(i + 1), player.pos.x * CELL_SIZE + CELL_SIZE/2 - 3, player.pos.y * CELL_SIZE + CELL_SIZE/2 + 3);
+            }
+        }
     }
 
     // Classes de données
@@ -322,13 +477,18 @@ public class BombermanController implements Initializable {
         int bombsRemaining = 3;
         int bombRange = 2;
         int lives = 3;
+        boolean isAlive = true;
         Player(int x, int y) { this.pos = new Position(x, y); }
     }
 
     static class Bomb {
         Position pos;
         int timer = 120;
-        Bomb(int x, int y) { this.pos = new Position(x, y); }
+        int owner; // 1-4 pour les joueurs
+        Bomb(int x, int y, int owner) {
+            this.pos = new Position(x, y);
+            this.owner = owner;
+        }
     }
 
     static class Explosion {
@@ -338,20 +498,24 @@ public class BombermanController implements Initializable {
     }
 
     static class GameState {
-        Player player;
+        Player[] players = new Player[4];
         List<Bomb> bombs = new ArrayList<>();
         List<Explosion> explosions = new ArrayList<>();
         Set<Position> walls = new HashSet<>();
         Set<Position> destructibleWalls = new HashSet<>();
-        int score = 0;
-        int level = 1;
+
 
         GameState() {
-            player = new Player(1, 1);
+            // Positions de départ aux 4 coins
+            players[0] = new Player(1, 1);                      // Coin supérieur gauche
+            players[1] = new Player(GRID_SIZE - 2, GRID_SIZE - 2); // Coin inférieur droit
+            players[2] = new Player(1, GRID_SIZE - 2);           // Coin inférieur gauche
+            players[3] = new Player(GRID_SIZE - 2, 1);           // Coin supérieur droit
             initializeMap();
         }
 
         private void initializeMap() {
+            // Murs de bordure et murs fixes
             for (int i = 0; i < GRID_SIZE; i++) {
                 for (int j = 0; j < GRID_SIZE; j++) {
                     if (i == 0 || i == GRID_SIZE - 1 || j == 0 || j == GRID_SIZE - 1) {
@@ -362,16 +526,24 @@ public class BombermanController implements Initializable {
                 }
             }
 
+            // Murs destructibles avec zones de sécurité pour chaque joueur
             Random random = new Random();
             for (int i = 1; i < GRID_SIZE - 1; i++) {
                 for (int j = 1; j < GRID_SIZE - 1; j++) {
-                    if (!walls.contains(new Position(i, j)) &&
-                            !(i <= 2 && j <= 2) &&
-                            random.nextDouble() < 0.3) {
-                        destructibleWalls.add(new Position(i, j));
+                    Position pos = new Position(i, j);
+                    if (!walls.contains(pos) && !isInSafeZone(i, j) && random.nextDouble() < 0.25) {
+                        destructibleWalls.add(pos);
                     }
                 }
             }
+        }
+
+        private boolean isInSafeZone(int x, int y) {
+            // Zones de sécurité 2x2 pour chaque joueur
+            return (x <= 2 && y <= 2) ||                           // Joueur 1
+                    (x >= GRID_SIZE - 3 && y >= GRID_SIZE - 3) ||    // Joueur 2
+                    (x <= 2 && y >= GRID_SIZE - 3) ||                // Joueur 3
+                    (x >= GRID_SIZE - 3 && y <= 2);                  // Joueur 4
         }
     }
 }

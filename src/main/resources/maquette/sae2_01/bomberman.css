@@ -164,14 +164,35 @@
     -fx-background-color: rgba(76, 175, 80, 0.8);
 }
 
+/* Styles spécifiques aux joueurs */
+.player1-stats {
+    -fx-border-color: #2196F3;
+    -fx-background-color: rgba(33, 150, 243, 0.1);
+}
+
+.player1-stats:hover {
+    -fx-background-color: rgba(33, 150, 243, 0.2);
+}
+
+.player2-stats {
+    -fx-border-color: #F44336;
+    -fx-background-color: rgba(244, 67, 54, 0.1);
+}
+
+.player2-stats:hover {
+    -fx-background-color: rgba(244, 67, 54, 0.2);
+}
+
+.stat-sub-value {
+    -fx-text-fill: #cccccc;
+    -fx-font-size: 12px;
+    -fx-font-weight: normal;
+}
+
 /* Couleurs de thème personnalisées */
 .theme-orange {
     -fx-accent-color: #ff6b35;
     -fx-secondary-color: #f7931e;
     -fx-background-color: #1a1a1a;
     -fx-text-color: #ffffff;
-}
-
-.bottom {
-    display : none;
 }

@@ -24,7 +24,10 @@ public class BombermanApplication extends Application {
         Scene scene = new Scene(loader.load());
         scene.getStylesheets().add(getClass().getResource("bomberman.css").toExternalForm());
 
+
         primaryStage.setTitle("Bomberman JavaFX - FXML Edition");
+        primaryStage.setWidth(1000);
+        primaryStage.setHeight(1000);
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
         primaryStage.show();
