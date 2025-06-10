@@ -34,7 +34,7 @@ public class BombermanController implements Initializable {
     @FXML private ImageView livesIcon4;
     @FXML private Label bonusLabel;
     @FXML private ImageView titre;
-    @FXML private Label scoreLabel;
+
     private static final int GRID_SIZE = 15;
     private static final int CELL_SIZE = 40;
 
@@ -61,7 +61,6 @@ public class BombermanController implements Initializable {
 
     private long lastMoveTimeP1 = 0;
     private long lastMoveTimeP2 = 0;
-
     private static final long MOVE_DELAY = 150_000_000; // 150ms en nanosecondes
 
     @Override
@@ -130,6 +129,27 @@ public class BombermanController implements Initializable {
         }
 
         try {
+            P1B = new Image(getClass().getResourceAsStream("/maquette/sae2_01/P1_bas.gif"));
+        } catch (Exception e) {
+            System.err.println("Erreur lors du chargement de l'image P1.gif: " + e.getMessage());
+        }
+        try {
+            P1H = new Image(getClass().getResourceAsStream("/maquette/sae2_01/P1_haut.gif"));
+        } catch (Exception e) {
+            System.err.println("Erreur lors du chargement de l'image P1.gif: " + e.getMessage());
+        }
+        try {
+            P1G = new Image(getClass().getResourceAsStream("/maquette/sae2_01/P1_gauche.gif"));
+        } catch (Exception e) {
+            System.err.println("Erreur lors du chargement de l'image P1.gif: " + e.getMessage());
+        }
+        try {
+            P1D = new Image(getClass().getResourceAsStream("/maquette/sae2_01/P1_droite.gif"));
+        } catch (Exception e) {
+            System.err.println("Erreur lors du chargement de l'image P1.gif: " + e.getMessage());
+        }
+
+        try {
             iconeImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/icone.png"));
             if (livesIcon != null) {
                 livesIcon.setImage(iconeImage);
@@ -169,6 +189,7 @@ public class BombermanController implements Initializable {
         } catch (Exception e) {
             System.err.println("Erreur lors du chargement de l'image titre.png: " + e.getMessage());
         }
+        currentP1Image = P1B;
     }
 
     public void requestFocus() {
@@ -239,6 +260,7 @@ public class BombermanController implements Initializable {
 
         Position newPos = new Position(player.pos.x, player.pos.y);
         boolean moved = false;
+        Direction newDirection = Direction.IDLE;
 
 
         // Contrôles spécifiques à chaque joueur
@@ -381,6 +403,30 @@ public class BombermanController implements Initializable {
             Bomb bomb = bombIterator.next();
             bomb.timer--;
 
+            // Gérer les bombes qui bougent
+            if (bomb instanceof KickingBomb) {
+                KickingBomb kickingBomb = (KickingBomb) bomb;
+                if (kickingBomb.shouldMove()) {
+                    Position newPos = new Position(
+                            kickingBomb.pos.x + kickingBomb.direction.x,
+                            kickingBomb.pos.y + kickingBomb.direction.y
+                    );
+
+                    if (canMoveBombTo(newPos) && !isPlayerAt(newPos)) {
+                        kickingBomb.pos = newPos;
+                    } else {
+                        // La bombe s'arrête, on la convertit en bombe normale
+                        Bomb stoppedBomb = new Bomb(kickingBomb.pos.x, kickingBomb.pos.y, kickingBomb.owner);
+                        stoppedBomb.timer = kickingBomb.timer;
+
+                        bombIterator.remove();
+                        gameState.bombs.add(stoppedBomb);
+                        // On continue avec la boucle suivante pour éviter les problèmes
+                        continue;
+                    }
+                }
+            }
+
             if (bomb.timer <= 0) {
                 explodeBomb(bomb);
                 bombIterator.remove();
@@ -393,6 +439,10 @@ public class BombermanController implements Initializable {
 
             }
         }
+    }
+
+    private boolean isPlayerAt(Position pos) {
+        return pos.equals(gameState.player1.pos) || pos.equals(gameState.player2.pos);
     }
 
     private void explodeBomb(Bomb bomb) {
@@ -443,10 +493,20 @@ public class BombermanController implements Initializable {
     }
 
     private void checkPlayersHit() {
+        long currentTime = System.currentTimeMillis();
+
+        // Vérifier si l'invincibilité est terminée
+        if (gameState.player1.isInvulnerable && currentTime >= gameState.player1.invulnerabilityEndTime) {
+            gameState.player1.isInvulnerable = false;
+        }
+        if (gameState.player2.isInvulnerable && currentTime >= gameState.player2.invulnerabilityEndTime) {
+            gameState.player2.isInvulnerable = false;
+        }
+
         for (Explosion explosion : gameState.explosions) {
             for (int i = 0; i < 4; i++) {
                 Player player = gameState.players[i];
-                if (player.isAlive && explosion.pos.equals(player.pos)) {
+                if (player.isAlive && explosion.pos.equals(player.pos)&& !gameState.player1.isInvulnerable) {
                     player.lives--;
                     if (player.lives <= 0) {
                         player.isAlive = false;
@@ -550,9 +610,10 @@ public class BombermanController implements Initializable {
         player.feuBonusCount = 0;
         player.vitesseBonusCount = 0;
         player.bombeBonusCount = 0;
+        player.kickBonusCount = 0; // NOUVEAU
+        player.canKick = false; // NOUVEAU
     }
 
-    // Correction de la méthode checkItemPickup
     private void checkItemPickup() {
         // Vérifier pour tous les joueurs
         for (int i = 0; i < 4; i++) {
@@ -560,9 +621,10 @@ public class BombermanController implements Initializable {
         }
     }
 
-    private void checkItemPickupForPlayer(Player player, int playerIndex) {
-        if (!player.isAlive) return;
 
+    }
+
+    private void checkItemPickupForPlayer(Player player) {
         Item item = gameState.visibleItems.get(player.pos);
         if (item != null) {
             // Appliquer l'effet de l'objet
@@ -593,6 +655,13 @@ public class BombermanController implements Initializable {
                         respawnPlayer(player, playerIndex);
                     }
                     break;
+                case KICK:
+                    if (player.kickBonusCount < 2) { // Maximum 2 kick items
+                        player.kickBonusCount++;
+                        player.canKick = true;
+                        player.score += 60;
+                    }
+                    break;
             }
 
             // Retirer l'objet de la map
@@ -600,6 +669,17 @@ public class BombermanController implements Initializable {
         }
     }
 
+    private void respawnPlayer(Player player, int playerNumber) {
+        if (playerNumber == 1) {
+            player.pos = new Position(1, 1);
+        } else {
+            player.pos = new Position(GRID_SIZE - 2, GRID_SIZE - 2);
+        }
+
+        // Activer l'invincibilité pour 3 secondes
+        player.isInvulnerable = true;
+        player.invulnerabilityEndTime = System.currentTimeMillis() + 3000; // 3 secondes
+    }
 
     private void gameOver(String message) {
         if (gameLoop != null) {
@@ -609,6 +689,35 @@ public class BombermanController implements Initializable {
         // Ici vous pourriez afficher un écran de game over avec le message
     }
 
+    private void updateUI() {
+        // UI pour le joueur 1
+        bombsLabel.setText("J1 Bombes: " + gameState.player1.bombsRemaining + "/" + gameState.player1.maxBombs);
+        scoreLabel.setText("J1 Score: " + gameState.player1.score + " | J2 Score: " + gameState.player2.score);
+        levelLabel.setText("Niveau: " + gameState.level);
+
+        // Afficher le nombre de vies pour chaque joueur
+        if (livesLabel != null) {
+            livesLabel.setText("x" + gameState.player1.lives);
+        }
+
+        if (livesLabel2 != null) {
+            livesLabel2.setText("x" + gameState.player2.lives);
+        }
+
+        // Afficher les bonus actuels pour les deux joueurs
+        if (bonusLabel != null) {
+            String bonusText = String.format("J1 - Feu: %d | Vitesse: %d | Bombe: %d | Kick: %d || J2 - Feu: %d | Vitesse: %d | Bombe: %d | Kick: %d",
+                    gameState.player1.feuBonusCount,
+                    gameState.player1.vitesseBonusCount,
+                    gameState.player1.bombeBonusCount,
+                    gameState.player1.kickBonusCount, // NOUVEAU
+                    gameState.player2.feuBonusCount,
+                    gameState.player2.vitesseBonusCount,
+                    gameState.player2.bombeBonusCount,
+                    gameState.player2.kickBonusCount); // NOUVEAU
+            bonusLabel.setText(bonusText);
+        }
+    }
 
     private void render() {
         // Fond
@@ -642,6 +751,9 @@ public class BombermanController implements Initializable {
                 case SKULL:
                     itemImage = skullImage;
                     break;
+                case KICK:
+                    itemImage = kickImage;
+                    break;
             }
 
             if (itemImage != null) {
@@ -660,6 +772,9 @@ public class BombermanController implements Initializable {
                         break;
                     case SKULL:
                         gc.setFill(Color.web("#8B008B"));
+                        break;
+                    case KICK:
+                        gc.setFill(Color.web("#FFD700")); // Couleur dorée
                         break;
                 }
                 gc.fillOval(pos.x * CELL_SIZE + 8, pos.y * CELL_SIZE + 8, CELL_SIZE - 16, CELL_SIZE - 16);
@@ -708,49 +823,27 @@ public class BombermanController implements Initializable {
             }
         }
 
-
-        // Couleurs des joueurs
-        Color[] playerColors = {
-                Color.web("#2196F3"), // Bleu (Joueur 1)
-                Color.web("#F44336"), // Rouge (Joueur 2)
-                Color.web("#4CAF50"), // Vert (Joueur 3)
-                Color.web("#FF9800")  // Orange (Joueur 4)
-        };
-
-        Color[] highlightColors = {
-                Color.web("#64B5F6"), // Bleu clair
-                Color.web("#EF5350"), // Rouge clair
-                Color.web("#81C784"), // Vert clair
-                Color.web("#FFB74D")  // Orange clair
-        };
-
-        // Affichage des joueurs
-        for (int i = 0; i < 4; i++) {
-            Player player = gameState.players[i];
-            if (player.isAlive) {
-                // Corps du joueur
-                gc.setFill(playerColors[i]);
-                gc.fillOval(player.pos.x * CELL_SIZE + 5, player.pos.y * CELL_SIZE + 5, CELL_SIZE - 10, CELL_SIZE - 10);
-
-                // Highlight
-                gc.setFill(highlightColors[i]);
-                gc.fillOval(player.pos.x * CELL_SIZE + 8, player.pos.y * CELL_SIZE + 8, 8, 8);
-
-                // Numéro du joueur
-                gc.setFill(Color.WHITE);
-                gc.fillText(String.valueOf(i + 1), player.pos.x * CELL_SIZE + CELL_SIZE/2 - 3, player.pos.y * CELL_SIZE + CELL_SIZE/2 + 3);
-            }
-        }
-
-        // Bombes - Remplacées par l'image de bombe statique
+        // Bombes
         for (Bomb bomb : gameState.bombs) {
             if (explosionGifImage != null) {
-                // Utiliser l'image de bombe statique
                 gc.drawImage(explosionGifImage, bomb.pos.x * CELL_SIZE, bomb.pos.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+
+                // Ajouter un effet pour les bombes qui bougent
+                if (bomb instanceof KickingBomb) {
+                    gc.setFill(Color.web("#FFD700", 0.3)); // Halo doré semi-transparent
+                    gc.fillOval(bomb.pos.x * CELL_SIZE + 2, bomb.pos.y * CELL_SIZE + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+                }
             } else {
-                // Fallback avec animation clignotante (code original)
+                // Fallback
                 boolean blink = bomb.timer < 60 && (bomb.timer / 10) % 2 == 0;
-                gc.setFill(blink ? Color.web("#F44336") : Color.web("#212121"));
+                Color bombColor = blink ? Color.web("#F44336") : Color.web("#212121");
+
+                // Couleur différente pour les bombes qui bougent
+                if (bomb instanceof KickingBomb) {
+                    bombColor = blink ? Color.web("#FF9800") : Color.web("#424242");
+                }
+
+                gc.setFill(bombColor);
                 gc.fillOval(bomb.pos.x * CELL_SIZE + 8, bomb.pos.y * CELL_SIZE + 8, CELL_SIZE - 16, CELL_SIZE - 16);
 
                 // Mèche
@@ -759,11 +852,55 @@ public class BombermanController implements Initializable {
             }
         }
 
+        // Joueur 1 - avec effet de clignotement si invulnérable
+        boolean shouldDrawPlayer1 = true;
+        if (gameState.player1.isInvulnerable) {
+            // Faire clignoter le joueur (visible/invisible toutes les 200ms)
+            shouldDrawPlayer1 = (System.currentTimeMillis() / 200) % 2 == 0;
+        }
+
+        if (shouldDrawPlayer1) {
+            if (currentP1Image != null) {
+                gc.drawImage(currentP1Image,
+                        gameState.player1.pos.x * CELL_SIZE,
+                        gameState.player1.pos.y * CELL_SIZE,
+                        CELL_SIZE,
+                        CELL_SIZE);
+            } else {
+                // Fallback si les images ne se chargent pas
+                gc.setFill(Color.web("#2196F3"));
+                gc.fillOval(gameState.player1.pos.x * CELL_SIZE + 5,
+                        gameState.player1.pos.y * CELL_SIZE + 5,
+                        CELL_SIZE - 10,
+                        CELL_SIZE - 10);
+                gc.setFill(Color.web("#64B5F6"));
+                gc.fillOval(gameState.player1.pos.x * CELL_SIZE + 8,
+                        gameState.player1.pos.y * CELL_SIZE + 8, 8, 8);
+            }
+        }
+
+        // Joueur 2 - avec effet de clignotement si invulnérable
+        boolean shouldDrawPlayer2 = true;
+        if (gameState.player2.isInvulnerable) {
+            // Faire clignoter le joueur (visible/invisible toutes les 200ms)
+            shouldDrawPlayer2 = (System.currentTimeMillis() / 200) % 2 == 0;
+        }
+
+        if (shouldDrawPlayer2) {
+            gc.setFill(Color.web("#F44336"));
+            gc.fillOval(gameState.player2.pos.x * CELL_SIZE + 5,
+                    gameState.player2.pos.y * CELL_SIZE + 5,
+                    CELL_SIZE - 10,
+                    CELL_SIZE - 10);
+            gc.setFill(Color.web("#EF5350"));
+            gc.fillOval(gameState.player2.pos.x * CELL_SIZE + 8,
+                    gameState.player2.pos.y * CELL_SIZE + 8, 8, 8);
+        }
     }
 
     // Énumération pour les types d'objets
     enum ItemType {
-        FEU, VITESSE, BOMBE, SKULL
+        FEU, VITESSE, BOMBE, SKULL, KICK
     }
 
     // Classes de données
@@ -797,6 +934,12 @@ public class BombermanController implements Initializable {
         int feuBonusCount = 0;
         int vitesseBonusCount = 0;
         int bombeBonusCount = 0;
+        int kickBonusCount = 0; // NOUVEAU
+        boolean canKick = false; // NOUVEAU
+
+        // Nouvelles variables pour l'invincibilité
+        boolean isInvulnerable = false;
+        long invulnerabilityEndTime = 0;
 
 
         Player(int x, int y) { this.pos = new Position(x, y); }
@@ -902,7 +1045,7 @@ public class BombermanController implements Initializable {
         }
 
         private void placeItems(List<Position> availablePositions, Random random) {
-            if (availablePositions.size() < 17) {
+            if (availablePositions.size() < 19) { // Augmenté de 17 à 19
                 System.err.println("Pas assez de murs destructibles pour placer tous les objets");
                 System.err.println("Positions disponibles: " + availablePositions.size() + ", requis: 17");
                 // Réduire le nombre d'objets si nécessaire
@@ -911,6 +1054,7 @@ public class BombermanController implements Initializable {
             }
 
             Collections.shuffle(availablePositions, random);
+
             int index = 0;
 
             // Placer 4 objets feu
@@ -926,6 +1070,11 @@ public class BombermanController implements Initializable {
             // Placer 8 objets bombe
             for (int i = 0; i < 8 && index < availablePositions.size(); i++, index++) {
                 hiddenItems.put(availablePositions.get(index), new Item(ItemType.BOMBE));
+            }
+
+            // Placer 2 objets kick - NOUVEAU
+            for (int i = 0; i < 2 && index < availablePositions.size(); i++, index++) {
+                hiddenItems.put(availablePositions.get(index), new Item(ItemType.KICK));
             }
 
             // Placer 1 skull
@@ -975,5 +1124,4 @@ public class BombermanController implements Initializable {
             System.out.println("================");
         }
     }
-
 }
