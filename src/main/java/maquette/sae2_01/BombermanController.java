@@ -272,6 +272,7 @@ public class BombermanController implements Initializable {
             return;
         }
 
+
         Position newPos = new Position(player.pos.x, player.pos.y);
         boolean moved = false;
         Direction newDirection = Direction.IDLE;
@@ -283,15 +284,19 @@ public class BombermanController implements Initializable {
                 if (pressedKeys.contains(KeyCode.Z)) {
                     newPos.y--;
                     moved = true;
+                    newDirection = Direction.UP;
                 } else if (pressedKeys.contains(KeyCode.S)) {
                     newPos.y++;
                     moved = true;
+                    newDirection = Direction.DOWN;
                 } else if (pressedKeys.contains(KeyCode.Q)) {
                     newPos.x--;
                     moved = true;
+                    newDirection = Direction.LEFT;
                 } else if (pressedKeys.contains(KeyCode.D)) {
                     newPos.x++;
                     moved = true;
+                    newDirection = Direction.RIGHT;
                 }
                 break;
 
@@ -299,15 +304,19 @@ public class BombermanController implements Initializable {
                 if (pressedKeys.contains(KeyCode.UP)) {
                     newPos.y--;
                     moved = true;
+                    newDirection = Direction.UP;
                 } else if (pressedKeys.contains(KeyCode.DOWN)) {
                     newPos.y++;
                     moved = true;
+                    newDirection = Direction.DOWN;
                 } else if (pressedKeys.contains(KeyCode.LEFT)) {
                     newPos.x--;
                     moved = true;
+                    newDirection = Direction.LEFT;
                 } else if (pressedKeys.contains(KeyCode.RIGHT)) {
                     newPos.x++;
                     moved = true;
+                    newDirection = Direction.RIGHT;
                 }
                 break;
 
@@ -315,15 +324,19 @@ public class BombermanController implements Initializable {
                 if (pressedKeys.contains(KeyCode.O)) {
                     newPos.y--;
                     moved = true;
+                    newDirection = Direction.UP;
                 } else if (pressedKeys.contains(KeyCode.L)) {
                     newPos.y++;
                     moved = true;
+                    newDirection = Direction.DOWN;
                 } else if (pressedKeys.contains(KeyCode.K)) {
                     newPos.x--;
                     moved = true;
+                    newDirection = Direction.LEFT;
                 } else if (pressedKeys.contains(KeyCode.M)) {
                     newPos.x++;
                     moved = true;
+                    newDirection = Direction.RIGHT;
                 }
                 break;
 
@@ -331,18 +344,24 @@ public class BombermanController implements Initializable {
                 if (pressedKeys.contains(KeyCode.T)) {
                     newPos.y--;
                     moved = true;
+                    newDirection = Direction.UP;
                 } else if (pressedKeys.contains(KeyCode.G)) {
                     newPos.y++;
                     moved = true;
+                    newDirection = Direction.DOWN;
                 } else if (pressedKeys.contains(KeyCode.F)) {
                     newPos.x--;
                     moved = true;
+                    newDirection = Direction.LEFT;
                 } else if (pressedKeys.contains(KeyCode.H)) {
                     newPos.x++;
                     moved = true;
+                    newDirection = Direction.RIGHT;
                 }
                 break;
         }
+
+        updatePlayerImage(playerIndex,newDirection);
 
         if (moved && canMoveTo(newPos)) {
             player.pos = newPos;
@@ -372,7 +391,7 @@ public class BombermanController implements Initializable {
     }
 
     private void updatePlayerImage(int playerNumber, Direction direction) {
-        if (playerNumber == 1) {
+        if (playerNumber == 0) {
             // Changer l'image du joueur 1 selon la direction
             switch (direction) {
                 case UP:
@@ -394,7 +413,7 @@ public class BombermanController implements Initializable {
                     }
                     break;
             }
-        } else if (playerNumber == 2) {
+        } else if (playerNumber == 1) {
             // Pour l'instant, le joueur 2 garde le rendu par défaut
             // Tu pourras implémenter ses images plus tard si tu veux
             // currentP2Image = ...;
