@@ -14,9 +14,9 @@
         <VBox styleClass="header-panel">
             <children>
                 <Label styleClass="game-title" text="BOMBERMAN" />
+                <Label fx:id="timerLabel" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
                 <HBox styleClass="stats-panel">
                     <VBox>
-
                     <children>
                         <HBox spacing="30">
                         <VBox styleClass="stat-item player1-stats">
