@@ -625,7 +625,7 @@ public class BombermanController implements Initializable {
 
     private void resetPlayerBonuses(Player player) {
         // Réinitialiser tous les bonus aux valeurs par défaut
-        player.bombRange = 2;
+        player.bombRange = 1;
         player.speedMultiplier = 1.0;
         player.maxBombs = 3;
         player.bombsRemaining = 3;
