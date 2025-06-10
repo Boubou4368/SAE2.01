@@ -588,9 +588,19 @@ public class BombermanController implements Initializable {
     }
 
     private void checkPlayersHit() {
+        long currentTime = System.currentTimeMillis();
+
+        // Vérifier si l'invincibilité est terminée
+        if (gameState.player1.isInvulnerable && currentTime >= gameState.player1.invulnerabilityEndTime) {
+            gameState.player1.isInvulnerable = false;
+        }
+        if (gameState.player2.isInvulnerable && currentTime >= gameState.player2.invulnerabilityEndTime) {
+            gameState.player2.isInvulnerable = false;
+        }
+
         for (Explosion explosion : gameState.explosions) {
-            // Vérifier joueur 1
-            if (explosion.pos.equals(gameState.player1.pos)) {
+            // Vérifier joueur 1 (seulement s'il n'est pas invulnérable)
+            if (explosion.pos.equals(gameState.player1.pos) && !gameState.player1.isInvulnerable) {
                 gameState.player1.lives--;
                 if (gameState.player1.lives <= 0) {
                     gameOver("Joueur 2 gagne !");
@@ -600,8 +610,8 @@ public class BombermanController implements Initializable {
                 }
             }
 
-            // Vérifier joueur 2
-            if (explosion.pos.equals(gameState.player2.pos)) {
+            // Vérifier joueur 2 (seulement s'il n'est pas invulnérable)
+            if (explosion.pos.equals(gameState.player2.pos) && !gameState.player2.isInvulnerable) {
                 gameState.player2.lives--;
                 if (gameState.player2.lives <= 0) {
                     gameOver("Joueur 1 gagne !");
@@ -689,6 +699,10 @@ public class BombermanController implements Initializable {
         } else {
             player.pos = new Position(GRID_SIZE - 2, GRID_SIZE - 2);
         }
+
+        // Activer l'invincibilité pour 3 secondes
+        player.isInvulnerable = true;
+        player.invulnerabilityEndTime = System.currentTimeMillis() + 3000; // 3 secondes
     }
 
     private void gameOver(String message) {
@@ -862,34 +876,50 @@ public class BombermanController implements Initializable {
             }
         }
 
-        // Joueur 1 - Utiliser l'image GIF selon la direction
-        if (currentP1Image != null) {
-            gc.drawImage(currentP1Image,
-                    gameState.player1.pos.x * CELL_SIZE,
-                    gameState.player1.pos.y * CELL_SIZE,
-                    CELL_SIZE,
-                    CELL_SIZE);
-        } else {
-            // Fallback si les images ne se chargent pas
-            gc.setFill(Color.web("#2196F3"));
-            gc.fillOval(gameState.player1.pos.x * CELL_SIZE + 5,
-                    gameState.player1.pos.y * CELL_SIZE + 5,
-                    CELL_SIZE - 10,
-                    CELL_SIZE - 10);
-            gc.setFill(Color.web("#64B5F6"));
-            gc.fillOval(gameState.player1.pos.x * CELL_SIZE + 8,
-                    gameState.player1.pos.y * CELL_SIZE + 8, 8, 8);
+        // Joueur 1 - avec effet de clignotement si invulnérable
+        boolean shouldDrawPlayer1 = true;
+        if (gameState.player1.isInvulnerable) {
+            // Faire clignoter le joueur (visible/invisible toutes les 200ms)
+            shouldDrawPlayer1 = (System.currentTimeMillis() / 200) % 2 == 0;
         }
 
-// Joueur 2 - Garder le rendu actuel pour l'instant
-        gc.setFill(Color.web("#F44336"));
-        gc.fillOval(gameState.player2.pos.x * CELL_SIZE + 5,
-                gameState.player2.pos.y * CELL_SIZE + 5,
-                CELL_SIZE - 10,
-                CELL_SIZE - 10);
-        gc.setFill(Color.web("#EF5350"));
-        gc.fillOval(gameState.player2.pos.x * CELL_SIZE + 8,
-                gameState.player2.pos.y * CELL_SIZE + 8, 8, 8);
+        if (shouldDrawPlayer1) {
+            if (currentP1Image != null) {
+                gc.drawImage(currentP1Image,
+                        gameState.player1.pos.x * CELL_SIZE,
+                        gameState.player1.pos.y * CELL_SIZE,
+                        CELL_SIZE,
+                        CELL_SIZE);
+            } else {
+                // Fallback si les images ne se chargent pas
+                gc.setFill(Color.web("#2196F3"));
+                gc.fillOval(gameState.player1.pos.x * CELL_SIZE + 5,
+                        gameState.player1.pos.y * CELL_SIZE + 5,
+                        CELL_SIZE - 10,
+                        CELL_SIZE - 10);
+                gc.setFill(Color.web("#64B5F6"));
+                gc.fillOval(gameState.player1.pos.x * CELL_SIZE + 8,
+                        gameState.player1.pos.y * CELL_SIZE + 8, 8, 8);
+            }
+        }
+
+        // Joueur 2 - avec effet de clignotement si invulnérable
+        boolean shouldDrawPlayer2 = true;
+        if (gameState.player2.isInvulnerable) {
+            // Faire clignoter le joueur (visible/invisible toutes les 200ms)
+            shouldDrawPlayer2 = (System.currentTimeMillis() / 200) % 2 == 0;
+        }
+
+        if (shouldDrawPlayer2) {
+            gc.setFill(Color.web("#F44336"));
+            gc.fillOval(gameState.player2.pos.x * CELL_SIZE + 5,
+                    gameState.player2.pos.y * CELL_SIZE + 5,
+                    CELL_SIZE - 10,
+                    CELL_SIZE - 10);
+            gc.setFill(Color.web("#EF5350"));
+            gc.fillOval(gameState.player2.pos.x * CELL_SIZE + 8,
+                    gameState.player2.pos.y * CELL_SIZE + 8, 8, 8);
+        }
     }
 
     // Énumération pour les types d'objets
@@ -927,6 +957,10 @@ public class BombermanController implements Initializable {
         int bombeBonusCount = 0;
         int kickBonusCount = 0; // NOUVEAU
         boolean canKick = false; // NOUVEAU
+
+        // Nouvelles variables pour l'invincibilité
+        boolean isInvulnerable = false;
+        long invulnerabilityEndTime = 0;
 
         Player(int x, int y) { this.pos = new Position(x, y); }
     }
