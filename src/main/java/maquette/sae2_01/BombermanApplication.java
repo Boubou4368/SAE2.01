@@ -37,6 +37,7 @@ public class BombermanApplication extends Application {
         controller.requestFocus();
     }
 
+
     public static void main(String[] args) {
         launch(args);
     }
