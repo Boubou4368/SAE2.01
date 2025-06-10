@@ -7,21 +7,20 @@ import javafx.fxml.Initializable;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 
 import javafx.application.Platform;
-import javafx.scene.layout.Pane;
 
-import javafx.scene.layout.StackPane;
 import javafx.geometry.Pos;
 import javafx.event.EventHandler;
 
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.Button;
-import javafx.scene.layout.VBox;
 import javafx.geometry.Pos;
 import javafx.stage.Stage;
 
@@ -257,13 +256,26 @@ public class BombermanController implements Initializable {
 
     private void gameOver() {
         if (gameLoop != null) {
-            gameLoop.stop();//arret
+            gameLoop.stop(); // arrêt
         }
 
         Platform.runLater(() -> {
-            // Créer le label "GAME OVER"
-            Label gameOverLabel = new Label("GAME OVER");
-            gameOverLabel.setStyle("-fx-font-size: 64px; -fx-text-fill: red; -fx-font-weight: bold;");
+            // Charger l'image de fond
+            Image backgroundImage = new Image(getClass().getResource("/gameoverbomberman.jpg").toExternalForm());
+
+            BackgroundImage bgImage = new BackgroundImage(
+                    backgroundImage,
+                    BackgroundRepeat.NO_REPEAT,
+                    BackgroundRepeat.NO_REPEAT,
+                    BackgroundPosition.CENTER,
+                    new BackgroundSize(800, 600, false, false, false, false)
+            );
+
+            // Organisation verticale avec fond
+            VBox vbox = new VBox(20);
+            vbox.setAlignment(Pos.CENTER);
+            vbox.setBackground(new Background(bgImage));
+            vbox.setPrefSize(800, 600);
 
             // Bouton Rejouer
             Button replayButton = new Button("Rejouer");
@@ -275,11 +287,7 @@ public class BombermanController implements Initializable {
             exitButton.setStyle("-fx-font-size: 20px;");
             exitButton.setOnAction(e -> Platform.exit());
 
-            // Organisation verticale
-            VBox vbox = new VBox(20, gameOverLabel, replayButton, exitButton);
-            vbox.setAlignment(Pos.CENTER);
-            vbox.setStyle("-fx-background-color: black;");
-            vbox.setPrefSize(800, 600); // adapte selon ton jeu
+            vbox.getChildren().addAll(replayButton, exitButton);
 
             // Créer la scène Game Over
             Scene gameOverScene = new Scene(vbox);
@@ -288,6 +296,7 @@ public class BombermanController implements Initializable {
             primaryStage.setScene(gameOverScene);
         });
     }
+
 
 
     private Scene originalGameScene;
