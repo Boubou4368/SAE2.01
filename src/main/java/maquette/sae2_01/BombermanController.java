@@ -26,8 +26,12 @@ public class BombermanController implements Initializable {
     @FXML private Label levelLabel;
     @FXML private Label livesLabel;
     @FXML private Label livesLabel2;
+    @FXML private Label livesLabel3;
+    @FXML private Label livesLabel4;
     @FXML private ImageView livesIcon;
     @FXML private ImageView livesIcon2;
+    @FXML private ImageView livesIcon3;
+    @FXML private ImageView livesIcon4;
     @FXML private Label bonusLabel;
     @FXML private ImageView titre;
     @FXML private Label scoreLabel;
@@ -140,6 +144,22 @@ public class BombermanController implements Initializable {
             }
         } catch (Exception e) {
             System.err.println("Erreur lors du chargement de l'image icone2.png: " + e.getMessage());
+        }
+        try {
+            iconeImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/icone3.png"));
+            if (livesIcon3 != null) {
+                livesIcon3.setImage(iconeImage);
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur lors du chargement de l'image icone3.png: " + e.getMessage());
+        }
+        try {
+            iconeImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/icone4.png"));
+            if (livesIcon4 != null) {
+                livesIcon4.setImage(iconeImage);
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur lors du chargement de l'image icone4.png: " + e.getMessage());
         }
         try {
             iconeImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/titre.png"));
@@ -364,10 +384,11 @@ public class BombermanController implements Initializable {
             if (bomb.timer <= 0) {
                 explodeBomb(bomb);
                 bombIterator.remove();
+                int originalOwner = bomb.owner;
 
                 // Rendre la bombe au bon joueur
-                if (bomb.owner >= 1 && bomb.owner <= 4) {
-                    gameState.players[bomb.owner - 1].bombsRemaining++;
+                if (originalOwner >= 1 && originalOwner <= 4) {
+                    gameState.players[originalOwner - 1].bombsRemaining++;
                 }
 
             }
@@ -376,7 +397,6 @@ public class BombermanController implements Initializable {
 
     private void explodeBomb(Bomb bomb) {
         int range = gameState.players[bomb.owner - 1].bombRange;
-
 
         gameState.explosions.add(new Explosion(bomb.pos.x, bomb.pos.y));
 
@@ -401,7 +421,7 @@ public class BombermanController implements Initializable {
                 // Vérifier si c'est un mur destructible
                 if (gameState.destructibleWalls.contains(explPos)) {
                     gameState.destructibleWalls.remove(explPos);
-                    bomb.owner += 10;
+
 
                     // Révéler l'objet s'il y en a un
                     Item hiddenItem = gameState.hiddenItems.get(explPos);
@@ -486,10 +506,6 @@ public class BombermanController implements Initializable {
             }
         }
 
-        // Mise à jour du score (ajoutez scoreLabel dans votre FXML)
-        if (scoreLabel != null) {
-            scoreLabel.setText("J1 Score: " + gameState.players[0].score + " | J2 Score: " + gameState.players[1].score);
-        }
 
         if (levelLabel != null) {
             levelLabel.setText("Niveau: " + gameState.level);
@@ -502,6 +518,12 @@ public class BombermanController implements Initializable {
 
         if (livesLabel2 != null) {
             livesLabel2.setText("x" + gameState.players[1].lives);
+        }
+        if (livesLabel3 != null) {
+            livesLabel3.setText("x" + gameState.players[2].lives);
+        }
+        if (livesLabel4 != null) {
+            livesLabel4.setText("x" + gameState.players[3].lives);
         }
 
         // Affichage des bonus

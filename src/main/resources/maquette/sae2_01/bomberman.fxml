@@ -14,41 +14,54 @@
         <VBox styleClass="header-panel">
             <children>
                 <Label styleClass="game-title" text="BOMBERMAN" />
-                <HBox spacing="5" alignment="CENTER_LEFT">
-                    <ImageView fx:id="livesIcon" fitWidth="24" fitHeight="24" />
-                    <Label fx:id="livesLabel" text="x3" style="-fx-font-size: 16px; -fx-text-fill: white;" />
-                </HBox>
-                <HBox spacing="5" alignment="CENTER_LEFT">
-                    <ImageView fx:id="livesIcon2" fitWidth="24" fitHeight="24" />
-                    <Label fx:id="livesLabel2" text="x3" style="-fx-font-size: 16px; -fx-text-fill: white;" />
-                </HBox>
                 <HBox styleClass="stats-panel">
+                    <VBox>
+
                     <children>
+                        <HBox spacing="30">
                         <VBox styleClass="stat-item player1-stats">
                             <children>
+                                <HBox spacing="5" alignment="CENTER_LEFT">
+                                    <ImageView fx:id="livesIcon" fitWidth="24" fitHeight="24" />
+                                    <Label fx:id="livesLabel" text="x3" style="-fx-font-size: 16px; -fx-text-fill: white;" />
+                                </HBox>
                                 <Label styleClass="stat-label" text="JOUEUR 1" />
                                 <Label fx:id="player1BombsLabel" styleClass="stat-value" text="Bombes: 3" />
                             </children>
                         </VBox>
                         <VBox styleClass="stat-item player2-stats">
                             <children>
+                                <HBox spacing="5" alignment="CENTER_LEFT">
+                                    <ImageView fx:id="livesIcon2" fitWidth="24" fitHeight="24" />
+                                    <Label fx:id="livesLabel2" text="x3" style="-fx-font-size: 16px; -fx-text-fill: white;" />
+                                </HBox>
                                 <Label styleClass="stat-label" text="JOUEUR 2" />
                                 <Label fx:id="player2BombsLabel" styleClass="stat-value" text="Bombes: 3" />
                             </children>
                         </VBox>
                         <VBox styleClass="stat-item player3-stats">
                             <children>
+                                <HBox spacing="5" alignment="CENTER_LEFT">
+                                    <ImageView fx:id="livesIcon3" fitWidth="24" fitHeight="24" />
+                                    <Label fx:id="livesLabel3" text="x3" style="-fx-font-size: 16px; -fx-text-fill: white;" />
+                                </HBox>
                                 <Label styleClass="stat-label" text="JOUEUR 3" />
                                 <Label fx:id="player3BombsLabel" styleClass="stat-value" text="Bombes: 3" />
                             </children>
                         </VBox>
                         <VBox styleClass="stat-item player4-stats">
                             <children>
+                                <HBox spacing="5" alignment="CENTER_LEFT">
+                                    <ImageView fx:id="livesIcon4" fitWidth="24" fitHeight="24" />
+                                    <Label fx:id="livesLabel4" text="x3" style="-fx-font-size: 16px; -fx-text-fill: white;" />
+                                </HBox>
                                 <Label styleClass="stat-label" text="JOUEUR 4" />
                                 <Label fx:id="player4BombsLabel" styleClass="stat-value" text="Bombes: 3" />
                             </children>
                         </VBox>
+                        </HBox>
                     </children>
+                    </VBox>
                 </HBox>
                 <HBox styleClass="level-panel" alignment="CENTER">
                     <children>
