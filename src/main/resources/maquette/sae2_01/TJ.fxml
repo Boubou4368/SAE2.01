@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/17.0.6"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="maquette.sae2_01.TJController"
+      spacing="15" alignment="CENTER" style="-fx-padding: 20;"
+      fx:id="root">
+
+<Button fx:id="btnAssign" text="Assigner une touche" />
+<Label fx:id="lblInfo" text="Clique sur le bouton pour commencer" />
+
+</VBox>

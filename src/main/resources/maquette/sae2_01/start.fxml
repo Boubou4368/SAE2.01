@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane fx:id="root" styleClass="background-pane" xmlns:fx="http://javafx.com/fxml" fx:controller="maquette.sae2_01.StartController">
+    <Button text="Start" onAction="#onStart" AnchorPane.bottomAnchor="10.0" AnchorPane.rightAnchor="10.0"/>
+</AnchorPane>

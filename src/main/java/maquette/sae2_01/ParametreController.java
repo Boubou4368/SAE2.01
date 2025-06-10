@@ -54,11 +54,33 @@ public class ParametreController {
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(gameScene);
             stage.setTitle("Paramètres");
+            stage.setWidth(600);
+            stage.setHeight(500);
             stage.show();
 
             // Donne le focus au canvas pour les touches clavier
-            BombermanController controller = loader.getController();
-            controller.requestFocus();
+            MenuController controller = loader.getController();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    @FXML
+    private void onTJ (ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("TJ.fxml"));
+            Scene gameScene = new Scene(loader.load());
+            TJController controller = loader.getController();
+            gameScene.getStylesheets().add(getClass().getResource("TJ.css").toExternalForm());
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(gameScene);
+            stage.setTitle("Paramètres");
+            stage.setWidth(600);
+            stage.setHeight(500);
+            stage.show();
+
 
         } catch (Exception e) {
             e.printStackTrace();

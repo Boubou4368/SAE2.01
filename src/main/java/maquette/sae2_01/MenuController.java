@@ -54,11 +54,12 @@ public class MenuController {
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(gameScene);
             stage.setTitle("Paramètres");
+            stage.setWidth(600);
+            stage.setHeight(500);
             stage.show();
 
             // Donne le focus au canvas pour les touches clavier
-            BombermanController controller = loader.getController();
-            controller.requestFocus();
+            ParametreController controller = loader.getController();
 
         } catch (Exception e) {
             e.printStackTrace();

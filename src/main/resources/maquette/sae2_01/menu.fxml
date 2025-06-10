@@ -6,8 +6,8 @@
 <?import javafx.scene.text.*?>
 
 <StackPane xmlns:fx="http://javafx.com/fxml" fx:controller="maquette.sae2_01.MenuController" stylesheets="@menu.css" styleClass="fond-stackpane">
+    <Label fx:id="titleLabel" text="Bomberman" id="titleLabel" styleClass="menu-vbox" StackPane.alignment="TOP_CENTER"/>
     <VBox alignment="CENTER" spacing="20">
-        <Label fx:id="titleLabel" text="Bomberman" id="titleLabel" styleClass="menu-vbox"/>
         <Button text="Solo" onAction="#onPlay" styleClass="menu-button"/>
         <Button text="Multijoueur" onAction="#onPlay" styleClass="menu-button"/>
         <Button text="Paramètres" onAction="#onParametre" styleClass="menu-button"/>
