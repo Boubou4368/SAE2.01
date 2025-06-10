@@ -2,8 +2,6 @@ package maquette.sae2_01;
 // ==========================================
 // BombermanController.java
 import javafx.animation.AnimationTimer;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.canvas.Canvas;
@@ -14,12 +12,11 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
-import javafx.util.Duration;
 
 import java.net.URL;
 import java.util.*;
 
-public class BombermanController implements Initializable {
+public class BombermanController2 implements Initializable {
     @FXML
     private Canvas gameCanvas;
     @FXML private Label bombsLabel;
@@ -31,10 +28,6 @@ public class BombermanController implements Initializable {
     @FXML private ImageView livesIcon2;
     @FXML private Label bonusLabel;
     @FXML private ImageView titre;
-    @FXML private Label timerLabel;
-
-    private Timeline gameTimer;
-    private Integer startTimeInSeconds = 180; // 3 minutes = 180 secondes
 
     private static final int GRID_SIZE = 15;
     private static final int CELL_SIZE = 40;
@@ -54,6 +47,29 @@ public class BombermanController implements Initializable {
     private Image skullImage;
     private Image explosionGifImage; // Nouvelle image pour l'explosion
     private Image fireball; // Nouvelle image pour blast
+
+    // Images des drapeaux
+    private Image drapeauBlancImage; // J1
+    private Image drapeauNoirImage;  // J2
+    private Image drapeauBleuImage;  // J3
+    private Image drapeauRougeImage; // J4
+
+    private int getPlayerNumber(Player player) {
+        if (player == gameState.player1) return 1;
+        if (player == gameState.player2) return 2;
+        if (player == gameState.player3) return 3;
+        if (player == gameState.player4) return 4;
+        return 0;
+    }
+
+    private Image createColoredFlag(Image baseFlag, Color color) {
+        // Méthode pour créer une version colorée du drapeau
+        // Tu devras implémenter la logique de recoloration
+        return baseFlag; // Placeholder
+    }
+
+    // Mode de jeu
+    private boolean captureTheFlagMode = true;
 
     // Images d'animation pour les joueurs
     private Image P1H; // P1 gif haut
@@ -80,6 +96,8 @@ public class BombermanController implements Initializable {
 
     private long lastMoveTimeP1 = 0;
     private long lastMoveTimeP2 = 0;
+    private long lastMoveTimeP3 = 0; // NOUVEAU
+    private long lastMoveTimeP4 = 0; // NOUVEAU
     private static final long MOVE_DELAY = 150_000_000; // 150ms en nanosecondes
 
     @Override
@@ -94,32 +112,7 @@ public class BombermanController implements Initializable {
         gameCanvas.setFocusTraversable(true);
 
         startGameLoop();
-        startGameTimer(); // Démarrer le timer
         updateUI();
-    }
-
-    private void startGameTimer() {
-        timerLabel.setText("Temps restant: " + formatTime(startTimeInSeconds));
-
-        gameTimer = new Timeline(
-                new KeyFrame(Duration.seconds(1), event -> {
-                    startTimeInSeconds--;
-                    timerLabel.setText("Temps restant: " + formatTime(startTimeInSeconds));
-
-                    if (startTimeInSeconds <= 0) {
-                        gameTimer.stop();
-                        gameOver("Temps écoulé! Fin du jeu.");
-                    }
-                })
-        );
-        gameTimer.setCycleCount(Timeline.INDEFINITE);
-        gameTimer.play();
-    }
-
-    private String formatTime(int seconds) {
-        int minutes = seconds / 60;
-        int remainingSeconds = seconds % 60;
-        return String.format("%02d:%02d", minutes, remainingSeconds);
     }
 
     private void loadImages() {
@@ -193,6 +186,20 @@ public class BombermanController implements Initializable {
             System.err.println("Erreur lors du chargement de l'image P1.gif: " + e.getMessage());
         }
 
+        // Charger l'image de base du drapeau
+        try {
+            Image baseFlag = new Image(getClass().getResourceAsStream("/maquette/sae2_01/drapeau.png"));
+            if (baseFlag == null) {
+                System.err.println("Le fichier drapeau.png est introuvable.");}
+            // Créer les versions colorées (tu devras implémenter une méthode pour changer les couleurs)
+            drapeauBlancImage = createColoredFlag(baseFlag, Color.WHITE);
+            drapeauNoirImage = baseFlag; // Garder l'original noir
+            drapeauBleuImage = createColoredFlag(baseFlag, Color.BLUE);
+            drapeauRougeImage = createColoredFlag(baseFlag, Color.RED);
+        } catch (Exception e) {
+            System.err.println("Erreur lors du chargement des drapeaux: " + e.getMessage());
+        }
+
         try {
             iconeImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/icone.png"));
             if (livesIcon != null) {
@@ -257,6 +264,7 @@ public class BombermanController implements Initializable {
         updateExplosions();
         checkPlayersHit();
         checkItemPickup();
+        checkFlagCapture(); // Nouvelle méthode
     }
 
     private void handleInput(long currentTime) {
@@ -265,28 +273,57 @@ public class BombermanController implements Initializable {
 
         // Gérer les inputs du joueur 2 (Flèches)
         handlePlayerInput(gameState.player2, currentTime, lastMoveTimeP2, 2);
+
+        // Gérer les inputs du joueur 3 (TFGH)
+        handlePlayerInput(gameState.player3, currentTime, lastMoveTimeP3, 3);
+
+        // Gérer les inputs du joueur 4 (IJKL)
+        handlePlayerInput(gameState.player4, currentTime, lastMoveTimeP4, 4);
     }
 
     private void handlePlayerInput(Player player, long currentTime, long lastMoveTime, int playerNumber) {
+        // Permettre aux joueurs éliminés de seulement poser des bombes
+        if (player.isEliminated) {
+            // Seule la gestion des bombes pour les joueurs éliminés
+            // ... code bombe uniquement ...
+            return;
+        }
         // Calculer le délai de mouvement en fonction de la vitesse du joueur
         long currentMoveDelay = (long) (MOVE_DELAY / player.speedMultiplier);
 
         // Définir les touches selon le joueur
         KeyCode upKey, downKey, leftKey, rightKey, bombKey;
-        if (playerNumber == 1) {
-            // Joueur 1: ZQSD + Espace
-            upKey = KeyCode.Z;
-            downKey = KeyCode.S;
-            leftKey = KeyCode.Q;
-            rightKey = KeyCode.D;
-            bombKey = KeyCode.SPACE;
-        } else {
-            // Joueur 2: Flèches + Entrée
-            upKey = KeyCode.UP;
-            downKey = KeyCode.DOWN;
-            leftKey = KeyCode.LEFT;
-            rightKey = KeyCode.RIGHT;
-            bombKey = KeyCode.ENTER;
+        switch (playerNumber) {
+            case 1: // Joueur 1: ZQSD + Espace
+                upKey = KeyCode.Z;
+                downKey = KeyCode.S;
+                leftKey = KeyCode.Q;
+                rightKey = KeyCode.D;
+                bombKey = KeyCode.SPACE;
+                break;
+            case 2: // Joueur 2: Flèches + Entrée
+                upKey = KeyCode.UP;
+                downKey = KeyCode.DOWN;
+                leftKey = KeyCode.LEFT;
+                rightKey = KeyCode.RIGHT;
+                bombKey = KeyCode.ENTER;
+                break;
+            case 3: // Joueur 3: TFGH + R
+                upKey = KeyCode.T;
+                downKey = KeyCode.G;
+                leftKey = KeyCode.F;
+                rightKey = KeyCode.H;
+                bombKey = KeyCode.R;
+                break;
+            case 4: // Joueur 4: IJKL + U
+                upKey = KeyCode.I;
+                downKey = KeyCode.K;
+                leftKey = KeyCode.J;
+                rightKey = KeyCode.L;
+                bombKey = KeyCode.U;
+                break;
+            default:
+                return;
         }
 
         // GESTION DES BOMBES SÉPARÉE - sans délai de mouvement
@@ -347,11 +384,11 @@ public class BombermanController implements Initializable {
 
         if (moved && canMoveTo(newPos)) {
             player.pos = newPos;
-            // Mettre à jour le temps du dernier mouvement
-            if (playerNumber == 1) {
-                lastMoveTimeP1 = currentTime;
-            } else {
-                lastMoveTimeP2 = currentTime;
+            switch (playerNumber) {
+                case 1: lastMoveTimeP1 = currentTime; break;
+                case 2: lastMoveTimeP2 = currentTime; break;
+                case 3: lastMoveTimeP3 = currentTime; break;
+                case 4: lastMoveTimeP4 = currentTime; break;
             }
         }
 
@@ -365,6 +402,33 @@ public class BombermanController implements Initializable {
 
             if (directionKey != null) {
                 tryKickBomb(player, directionKey);
+            }
+        }
+    }
+
+    private void checkFlagCapture() {
+        Player[] players = {gameState.player1, gameState.player2, gameState.player3, gameState.player4};
+
+        for (Player player : players) {
+            if (player.isEliminated) continue;
+
+            // Vérifier si le joueur touche un drapeau ennemi
+            for (Player otherPlayer : players) {
+                if (otherPlayer != player && otherPlayer.hasFlag &&
+                        player.pos.equals(otherPlayer.flagPosition)) {
+
+                    // Capturer le drapeau
+                    otherPlayer.hasFlag = false;
+                    otherPlayer.isEliminated = true;
+                    player.flagsCaptured++;
+                    player.score += 500;
+
+                    // Vérifier victoire
+                    if (player.flagsCaptured >= 3) { // Capturer les 3 autres drapeaux
+                        gameOver("Joueur " + getPlayerNumber(player) + " gagne en capturant tous les drapeaux !");
+                        return;
+                    }
+                }
             }
         }
     }
@@ -508,13 +572,17 @@ public class BombermanController implements Initializable {
             }
         }
 
-        // Vérifier que les joueurs ne se chevauchent pas
-        if (pos.equals(gameState.player1.pos) || pos.equals(gameState.player2.pos)) {
-            return false;
+        // Vérifier que les joueurs vivants ne se chevauchent pas
+        Player[] players = {gameState.player1, gameState.player2, gameState.player3, gameState.player4};
+        for (Player player : players) {
+            if (!player.isEliminated && pos.equals(player.pos)) {
+                return false;
+            }
         }
 
         return true;
     }
+
 
     private void placeBomb(Player player) {
         Position bombPos = new Position(player.pos.x, player.pos.y);
@@ -631,25 +699,17 @@ public class BombermanController implements Initializable {
         }
 
         for (Explosion explosion : gameState.explosions) {
-            // Vérifier joueur 1 (seulement s'il n'est pas invulnérable)
-            if (explosion.pos.equals(gameState.player1.pos) && !gameState.player1.isInvulnerable) {
-                gameState.player1.lives--;
-                if (gameState.player1.lives <= 0) {
-                    gameOver("Joueur 2 gagne !");
-                } else {
-                    resetPlayerBonuses(gameState.player1);
-                    respawnPlayer(gameState.player1, 1);
-                }
-            }
+// Vérifier les joueurs 3 et 4 aussi
+            Player[] allPlayers = {gameState.player1, gameState.player2, gameState.player3, gameState.player4};
 
-            // Vérifier joueur 2 (seulement s'il n'est pas invulnérable)
-            if (explosion.pos.equals(gameState.player2.pos) && !gameState.player2.isInvulnerable) {
-                gameState.player2.lives--;
-                if (gameState.player2.lives <= 0) {
-                    gameOver("Joueur 1 gagne !");
-                } else {
-                    resetPlayerBonuses(gameState.player2);
-                    respawnPlayer(gameState.player2, 2);
+            for (Player player : allPlayers) {
+                if (explosion.pos.equals(player.pos) && !player.isInvulnerable && !player.isEliminated) {
+                    if (player.hasFlag) {
+                        // Perdre le drapeau et être éliminé
+                        player.hasFlag = false;
+                        player.isEliminated = true;
+                    }
+                    // Pas de perte de vie, juste élimination
                 }
             }
         }
@@ -657,7 +717,7 @@ public class BombermanController implements Initializable {
 
     private void resetPlayerBonuses(Player player) {
         // Réinitialiser tous les bonus aux valeurs par défaut
-        player.bombRange = 2;
+        player.bombRange = 1;
         player.speedMultiplier = 1.0;
         player.maxBombs = 3;
         player.bombsRemaining = 3;
@@ -734,25 +794,39 @@ public class BombermanController implements Initializable {
 
         // Activer l'invincibilité pour 3 secondes
         player.isInvulnerable = true;
-        player.invulnerabilityEndTime = System.currentTimeMillis() + 2000; // 3 secondes
+        player.invulnerabilityEndTime = System.currentTimeMillis() + 3000; // 3 secondes
     }
 
     private void gameOver(String message) {
         if (gameLoop != null) {
             gameLoop.stop();
         }
-        if (gameTimer != null) {
-            gameTimer.stop();
-        }
         System.out.println("Game Over: " + message);
         // Ici vous pourriez afficher un écran de game over avec le message
     }
 
     private void updateUI() {
+        if (bonusLabel != null) {
+            bonusLabel.setText("Some text");
+        } else {
+            System.err.println("bonusLabel est null");
+        }
         // UI pour le joueur 1
         bombsLabel.setText("J1 Bombes: " + gameState.player1.bombsRemaining + "/" + gameState.player1.maxBombs);
         scoreLabel.setText("J1 Score: " + gameState.player1.score + " | J2 Score: " + gameState.player2.score);
         levelLabel.setText("Niveau: " + gameState.level);
+        // Afficher les infos des 4 joueurs
+        scoreLabel.setText(String.format("J1:%d J2:%d J3:%d J4:%d",
+                gameState.player1.score, gameState.player2.score,
+                gameState.player3.score, gameState.player4.score));
+
+        // Afficher le statut des drapeaux
+        String flagStatus = String.format("Drapeaux - J1:%s J2:%s J3:%s J4:%s",
+                gameState.player1.hasFlag ? "✓" : "✗",
+                gameState.player2.hasFlag ? "✓" : "✗",
+                gameState.player3.hasFlag ? "✓" : "✗",
+                gameState.player4.hasFlag ? "✓" : "✗");
+        bonusLabel.setText(flagStatus);
 
         // Afficher le nombre de vies pour chaque joueur
         if (livesLabel != null) {
@@ -775,6 +849,58 @@ public class BombermanController implements Initializable {
                     gameState.player2.bombeBonusCount,
                     gameState.player2.kickBonusCount); // NOUVEAU
             bonusLabel.setText(bonusText);
+        }
+    }
+
+    private void renderAllPlayers() {
+        // Joueur 1 - Bleu (avec animations existantes)
+        renderPlayer(gameState.player1, 1, Color.web("#2196F3"), Color.web("#64B5F6"));
+
+        // Joueur 2 - Rouge
+        renderPlayer(gameState.player2, 2, Color.web("#F44336"), Color.web("#EF5350"));
+
+        // Joueur 3 - Vert
+        renderPlayer(gameState.player3, 3, Color.web("#4CAF50"), Color.web("#66BB6A"));
+
+        // Joueur 4 - Jaune
+        renderPlayer(gameState.player4, 4, Color.web("#FF9800"), Color.web("#FFB74D"));
+    }
+
+    private void renderPlayer(Player player, int playerNumber, Color mainColor, Color accentColor) {
+        if (player == null) return;
+
+        // Effet de clignotement si invulnérable
+        boolean shouldDraw = true;
+        if (player.isInvulnerable) {
+            shouldDraw = (System.currentTimeMillis() / 200) % 2 == 0;
+        }
+
+        // Effet de transparence si éliminé
+        double opacity = player.isEliminated ? 0.5 : 1.0;
+
+        if (shouldDraw) {
+            if (playerNumber == 1 && currentP1Image != null) {
+                // Utiliser l'animation pour le joueur 1
+                gc.setGlobalAlpha(opacity);
+                gc.drawImage(currentP1Image,
+                        player.pos.x * CELL_SIZE,
+                        player.pos.y * CELL_SIZE,
+                        CELL_SIZE,
+                        CELL_SIZE);
+                gc.setGlobalAlpha(1.0);
+            } else {
+                // Rendu par défaut pour les autres joueurs
+                gc.setGlobalAlpha(opacity);
+                gc.setFill(mainColor);
+                gc.fillOval(player.pos.x * CELL_SIZE + 5,
+                        player.pos.y * CELL_SIZE + 5,
+                        CELL_SIZE - 10,
+                        CELL_SIZE - 10);
+                gc.setFill(accentColor);
+                gc.fillOval(player.pos.x * CELL_SIZE + 8,
+                        player.pos.y * CELL_SIZE + 8, 8, 8);
+                gc.setGlobalAlpha(1.0);
+            }
         }
     }
 
@@ -911,49 +1037,24 @@ public class BombermanController implements Initializable {
             }
         }
 
-        // Joueur 1 - avec effet de clignotement si invulnérable
-        boolean shouldDrawPlayer1 = true;
-        if (gameState.player1.isInvulnerable) {
-            // Faire clignoter le joueur (visible/invisible toutes les 200ms)
-            shouldDrawPlayer1 = (System.currentTimeMillis() / 200) % 2 == 0;
-        }
+        // Dessiner les drapeaux
+        renderFlags();
 
-        if (shouldDrawPlayer1) {
-            if (currentP1Image != null) {
-                gc.drawImage(currentP1Image,
-                        gameState.player1.pos.x * CELL_SIZE,
-                        gameState.player1.pos.y * CELL_SIZE,
-                        CELL_SIZE,
-                        CELL_SIZE);
-            } else {
-                // Fallback si les images ne se chargent pas
-                gc.setFill(Color.web("#2196F3"));
-                gc.fillOval(gameState.player1.pos.x * CELL_SIZE + 5,
-                        gameState.player1.pos.y * CELL_SIZE + 5,
-                        CELL_SIZE - 10,
-                        CELL_SIZE - 10);
-                gc.setFill(Color.web("#64B5F6"));
-                gc.fillOval(gameState.player1.pos.x * CELL_SIZE + 8,
-                        gameState.player1.pos.y * CELL_SIZE + 8, 8, 8);
+        // Modifier le rendu des joueurs pour inclure les 4 joueurs
+        renderAllPlayers();
+    }
+
+    private void renderFlags() {
+        Player[] players = {gameState.player1, gameState.player2, gameState.player3, gameState.player4};
+        Image[] flagImages = {drapeauBlancImage, drapeauNoirImage, drapeauBleuImage, drapeauRougeImage};
+
+        for (int i = 0; i < players.length; i++) {
+            if (players[i].hasFlag && flagImages[i] != null) {
+                gc.drawImage(flagImages[i],
+                        players[i].flagPosition.x * CELL_SIZE,
+                        players[i].flagPosition.y * CELL_SIZE,
+                        CELL_SIZE, CELL_SIZE);
             }
-        }
-
-        // Joueur 2 - avec effet de clignotement si invulnérable
-        boolean shouldDrawPlayer2 = true;
-        if (gameState.player2.isInvulnerable) {
-            // Faire clignoter le joueur (visible/invisible toutes les 200ms)
-            shouldDrawPlayer2 = (System.currentTimeMillis() / 200) % 2 == 0;
-        }
-
-        if (shouldDrawPlayer2) {
-            gc.setFill(Color.web("#F44336"));
-            gc.fillOval(gameState.player2.pos.x * CELL_SIZE + 5,
-                    gameState.player2.pos.y * CELL_SIZE + 5,
-                    CELL_SIZE - 10,
-                    CELL_SIZE - 10);
-            gc.setFill(Color.web("#EF5350"));
-            gc.fillOval(gameState.player2.pos.x * CELL_SIZE + 8,
-                    gameState.player2.pos.y * CELL_SIZE + 8, 8, 8);
         }
     }
 
@@ -981,8 +1082,8 @@ public class BombermanController implements Initializable {
         Position pos;
         int bombsRemaining = 3;
         int maxBombs = 3;
-        int bombRange = 1;
-        int lives = 3;
+        int bombRange = 2;
+        int lives = 1;
         double speedMultiplier = 1.0;
         int score = 0;
 
@@ -997,7 +1098,16 @@ public class BombermanController implements Initializable {
         boolean isInvulnerable = false;
         long invulnerabilityEndTime = 0;
 
-        Player(int x, int y) { this.pos = new Position(x, y); }
+        // Nouvelles variables pour le mode CTF
+        boolean hasFlag = true;        // Le joueur a-t-il encore son drapeau ?
+        boolean isEliminated = false;  // Le joueur est-il éliminé ?
+        int flagsCaptured = 0;         // Nombre de drapeaux capturés
+        Position flagPosition;         // Position du drapeau du joueur
+
+        Player(int x, int y) {
+            this.pos = new Position(x, y);
+            this.flagPosition = new Position(x, y); // Drapeau commence à la position du joueur
+        }
     }
 
     static class Bomb {
@@ -1025,6 +1135,8 @@ public class BombermanController implements Initializable {
     static class GameState {
         Player player1;
         Player player2;
+        Player player3;  // Nouveau joueur 3
+        Player player4;  // Nouveau joueur 4
         List<Bomb> bombs = new ArrayList<>();
         List<Explosion> explosions = new ArrayList<>();
         Set<Position> walls = new HashSet<>();
@@ -1036,6 +1148,8 @@ public class BombermanController implements Initializable {
         GameState() {
             player1 = new Player(1, 1);
             player2 = new Player(GRID_SIZE - 2, GRID_SIZE - 2);
+            player3 = new Player(1, GRID_SIZE - 2);        // Coin bas-gauche
+            player4 = new Player(GRID_SIZE - 2, 1);        // Coin haut-droite
             initializeMap();
         }
 
@@ -1077,6 +1191,12 @@ public class BombermanController implements Initializable {
 
             // Zone de départ joueur 2 (coin bas-droite)
             if (pos.x >= GRID_SIZE - 3 && pos.y >= GRID_SIZE - 3) return true;
+
+            // Zone de départ joueur 3 (coin bas-gauche)
+            if (pos.x <= 2 && pos.y >= GRID_SIZE - 3) return true;
+
+            // Zone de départ joueur 4 (coin haut-droite)
+            if (pos.x >= GRID_SIZE - 3 && pos.y <= 2) return true;
 
             return false;
         }

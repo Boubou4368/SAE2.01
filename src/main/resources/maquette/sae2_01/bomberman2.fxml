@@ -9,16 +9,16 @@
 <?import javafx.scene.layout.VBox?>
 
 <?import javafx.scene.image.ImageView?>
-<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="maquette.sae2_01.BombermanController">
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="maquette.sae2_01.BombermanController2">
     <top>
         <VBox styleClass="header-panel">
             <children>
                 <Label styleClass="game-title" text="BOMBERMAN" />
-                <Label fx:id="timerLabel" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
                 <HBox spacing="5" alignment="CENTER_LEFT">
                     <ImageView fx:id="livesIcon" fitWidth="24" fitHeight="24" />
                     <Label fx:id="livesLabel" text="x3" style="-fx-font-size: 16px; -fx-text-fill: white;" />
                 </HBox>
+                <Label fx:id="bonusLabel" />
                 <HBox spacing="5" alignment="CENTER_LEFT">
                     <ImageView fx:id="livesIcon2" fitWidth="24" fitHeight="24" />
                     <Label fx:id="livesLabel2" text="x3" style="-fx-font-size: 16px; -fx-text-fill: white;" />
