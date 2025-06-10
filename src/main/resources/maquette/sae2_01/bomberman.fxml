@@ -8,33 +8,64 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
+<?import javafx.scene.image.ImageView?>
 <BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="maquette.sae2_01.BombermanController">
     <top>
         <VBox styleClass="header-panel">
             <children>
                 <Label styleClass="game-title" text="BOMBERMAN" />
                 <HBox styleClass="stats-panel">
+                    <VBox>
+
                     <children>
-                        <VBox styleClass="stat-item">
+                        <HBox spacing="30">
+                        <VBox styleClass="stat-item player1-stats">
                             <children>
-                                <Label styleClass="stat-label" text="BOMBES" />
-                                <Label fx:id="bombsLabel" styleClass="stat-value" text="3" />
+                                <HBox spacing="5" alignment="CENTER_LEFT">
+                                    <ImageView fx:id="livesIcon" fitWidth="24" fitHeight="24" />
+                                    <Label fx:id="livesLabel" text="x3" style="-fx-font-size: 16px; -fx-text-fill: white;" />
+                                </HBox>
+                                <Label styleClass="stat-label" text="JOUEUR 1" />
+                                <Label fx:id="player1BombsLabel" styleClass="stat-value" text="Bombes: 3" />
                             </children>
                         </VBox>
-                        <Region HBox.hgrow="ALWAYS" />
-                        <VBox styleClass="stat-item">
+                        <VBox styleClass="stat-item player2-stats">
                             <children>
-                                <Label styleClass="stat-label" text="SCORE" />
-                                <Label fx:id="scoreLabel" styleClass="stat-value" text="0" />
+                                <HBox spacing="5" alignment="CENTER_LEFT">
+                                    <ImageView fx:id="livesIcon2" fitWidth="24" fitHeight="24" />
+                                    <Label fx:id="livesLabel2" text="x3" style="-fx-font-size: 16px; -fx-text-fill: white;" />
+                                </HBox>
+                                <Label styleClass="stat-label" text="JOUEUR 2" />
+                                <Label fx:id="player2BombsLabel" styleClass="stat-value" text="Bombes: 3" />
                             </children>
                         </VBox>
-                        <Region HBox.hgrow="ALWAYS" />
-                        <VBox styleClass="stat-item">
+                        <VBox styleClass="stat-item player3-stats">
                             <children>
-                                <Label styleClass="stat-label" text="NIVEAU" />
-                                <Label fx:id="levelLabel" styleClass="stat-value" text="1" />
+                                <HBox spacing="5" alignment="CENTER_LEFT">
+                                    <ImageView fx:id="livesIcon3" fitWidth="24" fitHeight="24" />
+                                    <Label fx:id="livesLabel3" text="x3" style="-fx-font-size: 16px; -fx-text-fill: white;" />
+                                </HBox>
+                                <Label styleClass="stat-label" text="JOUEUR 3" />
+                                <Label fx:id="player3BombsLabel" styleClass="stat-value" text="Bombes: 3" />
                             </children>
                         </VBox>
+                        <VBox styleClass="stat-item player4-stats">
+                            <children>
+                                <HBox spacing="5" alignment="CENTER_LEFT">
+                                    <ImageView fx:id="livesIcon4" fitWidth="24" fitHeight="24" />
+                                    <Label fx:id="livesLabel4" text="x3" style="-fx-font-size: 16px; -fx-text-fill: white;" />
+                                </HBox>
+                                <Label styleClass="stat-label" text="JOUEUR 4" />
+                                <Label fx:id="player4BombsLabel" styleClass="stat-value" text="Bombes: 3" />
+                            </children>
+                        </VBox>
+                        </HBox>
+                    </children>
+                    </VBox>
+                </HBox>
+                <HBox styleClass="level-panel" alignment="CENTER">
+                    <children>
+                        <Label fx:id="levelLabel" styleClass="level-text" text="Niveau: 1" />
                     </children>
                 </HBox>
             </children>
@@ -51,19 +82,34 @@
         <VBox styleClass="controls-panel">
             <children>
                 <Label styleClass="controls-title" text="CONTRÔLES" />
-                <HBox styleClass="controls-grid">
+                <HBox styleClass="controls-grid" alignment="BASELINE_CENTER">
                     <children>
-                        <VBox styleClass="control-group">
+                        <VBox styleClass="control-group player1-controls">
                             <children>
-                                <Label styleClass="control-label" text="DÉPLACEMENT" />
-                                <Label styleClass="control-keys" text="↑ ↓ ← → ou ZQSD" />
+                            <Label styleClass="control-label" text="JOUEUR 1 (BLEU)" />
+                                <Label styleClass="control-keys" text="Z Q S D : Déplacement" />
+                                <Label styleClass="control-keys" text="E : Bombe" />
                             </children>
                         </VBox>
-                        <Region HBox.hgrow="ALWAYS" />
-                        <VBox styleClass="control-group">
+                        <VBox styleClass="control-group player2-controls">
                             <children>
-                                <Label styleClass="control-label" text="BOMBE" />
-                                <Label styleClass="control-keys" text="ESPACE" />
+                                <Label styleClass="control-label" text="JOUEUR 2 (ROUGE)" />
+                                <Label styleClass="control-keys" text="↑ ↓ ← → : Déplacement" />
+                                <Label styleClass="control-keys" text="ENTRÉE : Bombe" />
+                            </children>
+                        </VBox>
+                        <VBox styleClass="control-group player3-controls">
+                            <children>
+                                <Label styleClass="control-label" text="JOUEUR 3 (VERT)" />
+                                <Label styleClass="control-keys" text="O K L M : Déplacement" />
+                                <Label styleClass="control-keys" text="P : Bombe" />
+                            </children>
+                        </VBox>
+                        <VBox styleClass="control-group player4-controls">
+                            <children>
+                                <Label styleClass="control-label" text="JOUEUR 4 (ORANGE)" />
+                                <Label styleClass="control-keys" text="T F G H : Déplacement" />
+                                <Label styleClass="control-keys" text="Y : Bombe" />
                             </children>
                         </VBox>
                     </children>

@@ -1,4 +1,4 @@
-module org.example.sae2_01 {
+module maquette.sae2_01 {
     requires javafx.controls;
     requires javafx.fxml;
     requires javafx.web;
