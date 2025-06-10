@@ -24,7 +24,11 @@ import javafx.scene.control.Button;
 import javafx.geometry.Pos;
 import javafx.stage.Stage;
 
+import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
 
+
+import java.io.PrintWriter;
 import java.net.URL;
 import java.util.*;
 
@@ -34,6 +38,11 @@ public class BombermanController implements Initializable {
     @FXML private Label bombsLabel;
     @FXML private Label scoreLabel;
     @FXML private Label levelLabel;
+    @FXML private Label profileLabel;
+
+
+    private String currentProfile = "";
+    private List<PlayerProfile> profileList = new ArrayList<>();
 
     private static final int GRID_SIZE = 15;
     private static final int CELL_SIZE = 40;
@@ -56,6 +65,12 @@ public class BombermanController implements Initializable {
         gc = gameCanvas.getGraphicsContext2D();
         gameState = new GameState();
         originalGameScene = gameCanvas.getScene();
+
+        loadScoresFromFile();
+
+        // Afficher l'écran de sélection de profil au démarrage
+        Platform.runLater(() -> showProfileSelection()); // NOUVEAU
+
 
         // Configurer le canvas pour recevoir les événements clavier
         gameCanvas.setFocusTraversable(true);
@@ -95,11 +110,57 @@ public class BombermanController implements Initializable {
         gameLoop.start();
     }
 
+
+    private void startGame() {
+        // Configurer le canvas pour recevoir les événements clavier
+        gameCanvas.setFocusTraversable(true);
+        startGameLoop();
+        updateUI();
+    }
+
+    private static class PlayerProfile {
+        String name;
+        int victories;
+        int defeats;
+        int bestScore;
+
+        PlayerProfile(String name) {
+            this.name = name;
+            this.victories = 0;
+            this.defeats = 0;
+            this.bestScore = 0;
+        }
+
+        void addVictory(int score) {
+            victories++;
+            if (score > bestScore) {
+                bestScore = score;
+            }
+        }
+
+        void addDefeat() {
+            defeats++;
+        }
+
+        int getTotalGames() {
+            return victories + defeats;
+        }
+
+        double getWinRate() {
+            if (getTotalGames() == 0) return 0.0;
+            return (double) victories / getTotalGames() * 100;
+        }
+    }
+
+
+
+
     private void update(long currentTime) {
         handleInput(currentTime);
         updateBombs();
         updateExplosions();
         checkPlayerHit();
+        checkVictoryCondition();
     }
 
     private void handleInput(long currentTime) {
@@ -254,48 +315,133 @@ public class BombermanController implements Initializable {
         gameState.player.pos = new Position(1, 1);
     }
 
+    public int score = 0;
+
+    private List<PlayerScore> scoreList = new ArrayList<>();
+
+    private static class PlayerScore {
+        String name;
+        int score;
+
+        PlayerScore(String name, int score) {
+            this.name = name;
+            this.score = score;
+        }
+    }
+
+
     private void gameOver() {
         if (gameLoop != null) {
-            gameLoop.stop(); // arrêt
+            gameLoop.stop();
         }
 
         Platform.runLater(() -> {
-            // Charger l'image de fond
-            Image backgroundImage = new Image(getClass().getResource("/gameoverbomberman.jpg").toExternalForm());
+            // Image de fond
+            Image backgroundImage = new Image(getClass().getResourceAsStream("/gameoverbomberman.jpg"));
+            BackgroundImage bgImage = new BackgroundImage(backgroundImage, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, new BackgroundSize(800, 600, false, false, false, false));
+            Background background = new Background(bgImage);
 
-            BackgroundImage bgImage = new BackgroundImage(
-                    backgroundImage,
-                    BackgroundRepeat.NO_REPEAT,
-                    BackgroundRepeat.NO_REPEAT,
-                    BackgroundPosition.CENTER,
-                    new BackgroundSize(800, 600, false, false, false, false)
-            );
+            // Saisie du nom
+            Label promptLabel = new Label("Entrez votre nom :");
+            promptLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+            TextField nameField = new TextField();
+            nameField.setMaxWidth(200);
 
-            // Organisation verticale avec fond
-            VBox vbox = new VBox(20);
+            Button submitButton = new Button("Valider le score");
+            submitButton.setOnAction(e -> {
+                String name = nameField.getText().trim();
+                if (!name.isEmpty()) {
+                    scoreList.add(new PlayerScore(name, gameState.player.score));
+                    saveScoresToFile(); // Sauvegarde ici
+                    showScoreboard();
+                }
+            });
+
+
+            VBox vbox = new VBox(15, promptLabel, nameField, submitButton);
             vbox.setAlignment(Pos.CENTER);
-            vbox.setBackground(new Background(bgImage));
+            vbox.setBackground(background);
             vbox.setPrefSize(800, 600);
 
-            // Bouton Rejouer
-            Button replayButton = new Button("Rejouer");
-            replayButton.setStyle("-fx-font-size: 20px;");
-            replayButton.setOnAction(e -> restartGame());
-
-            // Bouton Quitter
-            Button exitButton = new Button("Quitter");
-            exitButton.setStyle("-fx-font-size: 20px;");
-            exitButton.setOnAction(e -> Platform.exit());
-
-            vbox.getChildren().addAll(replayButton, exitButton);
-
-            // Créer la scène Game Over
             Scene gameOverScene = new Scene(vbox);
-
-            // Remplacer la scène actuelle par celle du Game Over
             primaryStage.setScene(gameOverScene);
         });
     }
+
+
+    private void loadScoresFromFile() {
+        try (Scanner scanner = new Scanner(new java.io.File("score.txt"))) {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                String[] parts = line.split(":");
+                if (parts.length == 2) {
+                    String name = parts[0].trim();
+                    int score = Integer.parseInt(parts[1].trim());
+                    scoreList.add(new PlayerScore(name, score));
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Aucun fichier de score trouvé ou erreur de lecture.");
+        }
+    }
+
+    private void saveScoresToFile() {
+        try (PrintWriter writer = new PrintWriter("score.txt")) {
+            for (PlayerScore ps : scoreList) {
+                writer.println(ps.name + ":" + ps.score);
+            }
+        } catch (Exception e) {
+            System.out.println("Erreur lors de l'écriture des scores.");
+            e.printStackTrace();
+        }
+    }
+
+
+
+    private void showScoreboard() {
+
+        // Tri décroissant des scores
+        scoreList.sort((a, b) -> Integer.compare(b.score, a.score));
+
+        Label title = new Label("Classement des scores");
+        title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
+
+        VBox scoresBox = new VBox(10);
+        scoresBox.setAlignment(Pos.CENTER);
+        for (int i = 0; i < Math.min(5, scoreList.size()); i++) {
+            PlayerScore ps = scoreList.get(i);
+            Label label = new Label((i + 1) + ". " + ps.name + " - " + ps.score + " pts");
+            label.setStyle("-fx-font-size: 16px;");
+            scoresBox.getChildren().add(label);
+        }
+
+        Button replayButton = new Button("Rejouer");
+        replayButton.setOnAction(e -> restartGame());
+
+        Button quitButton = new Button("Quitter");
+        quitButton.setOnAction(e -> Platform.exit());
+
+        VBox root = new VBox(20, title, scoresBox, replayButton, quitButton);
+        root.setAlignment(Pos.CENTER);
+        root.setPrefSize(800, 600);
+
+        Scene scoreScene = new Scene(root);
+        primaryStage.setScene(scoreScene);
+    }
+
+
+
+    private void updateScoreBoard(VBox scoreBox) {
+        scoreBox.getChildren().removeIf(node -> node instanceof HBox);
+        int rank = 1;
+        for (PlayerScore ps : scoreList) {
+            Label label = new Label(rank++ + ". " + ps.name + " - " + ps.score);
+            label.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+            scoreBox.getChildren().add(label);
+        }
+    }
+
+
 
 
 
@@ -408,6 +554,7 @@ public class BombermanController implements Initializable {
     }
 
     static class Player {
+        public int score;
         Position pos;
         int bombsRemaining = 3;
         int bombRange = 2;
