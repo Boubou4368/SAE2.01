@@ -15,7 +15,7 @@ import javafx.scene.paint.Color;
 import java.net.URL;
 import java.util.*;
 
-import static com.sun.scenario.effect.impl.prism.PrEffectHelper.render;
+//import static com.sun.scenario.effect.impl.prism.PrEffectHelper.render;
 
 public class BombermanController implements Initializable {
     @FXML private Canvas gameCanvas;
