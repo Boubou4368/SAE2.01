@@ -1,6 +1,5 @@
 package maquette.sae2_01;
-// ==========================================
-// BombermanController.java
+
 import javafx.animation.AnimationTimer;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -44,6 +43,8 @@ public class BombermanController implements Initializable {
     private Set<KeyCode> pressedKeys = new HashSet<>();
     private AnimationTimer gameLoop;
 
+    private SoundManager soundManager; // Ajout du SoundManager
+
     // Images
     private Image brickImage;
     private Image feuImage;
@@ -52,49 +53,45 @@ public class BombermanController implements Initializable {
     private Image bombeImage;
     private Image iconeImage;
     private Image skullImage;
-    private Image explosionGifImage; // Nouvelle image pour l'explosion
-    private Image fireball; // Nouvelle image pour blast
+    private Image explosionGifImage;
+    private Image fireball;
 
     // Images d'animation pour les joueurs
-    private Image P1H; // P1 gif haut
-    private Image P1B; // P1 gif bas
-    private Image P1G; // P1 gif gauche
-    private Image P1D; // P1 gif droite
+    private Image P1H;
+    private Image P1B;
+    private Image P1G;
+    private Image P1D;
 
-    // Variables pour gérer l'animation des joueurs
     private Image currentP1Image = null;
     private Image currentP2Image = null;
 
-    // Énumération pour les directions
     private enum Direction {
         UP, DOWN, LEFT, RIGHT, IDLE
     }
 
-    // Direction actuelle de chaque joueur
     private Direction player1Direction = Direction.IDLE;
     private Direction player2Direction = Direction.IDLE;
 
-    // Timer pour l'animation (optionnel, pour changer de frame si nécessaire)
     private long lastAnimationUpdate = 0;
-    private static final long ANIMATION_DELAY = 200_000_000; // 200ms en nanosecondes
+    private static final long ANIMATION_DELAY = 200_000_000;
 
     private long lastMoveTimeP1 = 0;
     private long lastMoveTimeP2 = 0;
-    private static final long MOVE_DELAY = 150_000_000; // 150ms en nanosecondes
+    private static final long MOVE_DELAY = 150_000_000;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         gc = gameCanvas.getGraphicsContext2D();
         gameState = new GameState();
 
-        // Charger les images
         loadImages();
+        soundManager = SoundManager.getInstance(); // Initialisation du SoundManager
+        soundManager.startBackgroundMusic(); // Démarrer la musique de fond
 
-        // Configurer le canvas pour recevoir les événements clavier
         gameCanvas.setFocusTraversable(true);
 
         startGameLoop();
-        startGameTimer(); // Démarrer le timer
+        startGameTimer();
         updateUI();
     }
 
@@ -159,7 +156,6 @@ public class BombermanController implements Initializable {
             System.err.println("Erreur lors du chargement de l'image skull.png: " + e.getMessage());
         }
 
-        // Charger l'image d'explosion (GIF)
         try {
             explosionGifImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/explosion.gif"));
         } catch (Exception e) {
@@ -260,28 +256,21 @@ public class BombermanController implements Initializable {
     }
 
     private void handleInput(long currentTime) {
-        // Gérer les inputs du joueur 1 (ZQSD)
         handlePlayerInput(gameState.player1, currentTime, lastMoveTimeP1, 1);
-
-        // Gérer les inputs du joueur 2 (Flèches)
         handlePlayerInput(gameState.player2, currentTime, lastMoveTimeP2, 2);
     }
 
     private void handlePlayerInput(Player player, long currentTime, long lastMoveTime, int playerNumber) {
-        // Calculer le délai de mouvement en fonction de la vitesse du joueur
         long currentMoveDelay = (long) (MOVE_DELAY / player.speedMultiplier);
 
-        // Définir les touches selon le joueur
         KeyCode upKey, downKey, leftKey, rightKey, bombKey;
         if (playerNumber == 1) {
-            // Joueur 1: ZQSD + Espace
             upKey = KeyCode.Z;
             downKey = KeyCode.S;
             leftKey = KeyCode.Q;
             rightKey = KeyCode.D;
             bombKey = KeyCode.SPACE;
         } else {
-            // Joueur 2: Flèches + Entrée
             upKey = KeyCode.UP;
             downKey = KeyCode.DOWN;
             leftKey = KeyCode.LEFT;
@@ -289,9 +278,7 @@ public class BombermanController implements Initializable {
             bombKey = KeyCode.ENTER;
         }
 
-        // GESTION DES BOMBES SÉPARÉE - sans délai de mouvement
         if (pressedKeys.contains(bombKey) && player.bombsRemaining > 0) {
-            // Vérifier qu'il n'y a pas déjà une bombe à la position du joueur
             boolean canPlaceBomb = true;
             Position bombPos = new Position(player.pos.x, player.pos.y);
 
@@ -305,13 +292,11 @@ public class BombermanController implements Initializable {
             if (canPlaceBomb) {
                 placeBomb(player);
             }
-            // Retirer la touche pour éviter le spam de bombes
             pressedKeys.remove(bombKey);
         }
 
-        // Vérifier si assez de temps s'est écoulé depuis le dernier mouvement
         if (currentTime - lastMoveTime < currentMoveDelay) {
-            return; // Ne pas bouger mais on a déjà géré les bombes ci-dessus
+            return;
         }
 
         Position newPos = new Position(player.pos.x, player.pos.y);
@@ -336,7 +321,6 @@ public class BombermanController implements Initializable {
             newDirection = Direction.RIGHT;
         }
 
-        // Mettre à jour la direction et l'image du joueur
         if (playerNumber == 1) {
             player1Direction = newDirection;
             updatePlayerImage(1, newDirection);
@@ -347,15 +331,14 @@ public class BombermanController implements Initializable {
 
         if (moved && canMoveTo(newPos)) {
             player.pos = newPos;
-            // Mettre à jour le temps du dernier mouvement
             if (playerNumber == 1) {
                 lastMoveTimeP1 = currentTime;
             } else {
                 lastMoveTimeP2 = currentTime;
             }
+            soundManager.playSound("walk"); // Jouer le son de pas
         }
 
-        // Gestion du kick
         if (player.canKick && moved) {
             KeyCode directionKey = null;
             if (pressedKeys.contains(upKey)) directionKey = upKey;
@@ -371,31 +354,25 @@ public class BombermanController implements Initializable {
 
     private void updatePlayerImage(int playerNumber, Direction direction) {
         if (playerNumber == 1) {
-            // Changer l'image du joueur 1 selon la direction
             switch (direction) {
                 case UP:
-                    currentP1Image = P1H; // Image haut
+                    currentP1Image = P1H;
                     break;
                 case DOWN:
-                    currentP1Image = P1B; // Image bas
+                    currentP1Image = P1B;
                     break;
                 case LEFT:
-                    currentP1Image = P1G; // Image gauche
+                    currentP1Image = P1G;
                     break;
                 case RIGHT:
-                    currentP1Image = P1D; // Image droite
+                    currentP1Image = P1D;
                     break;
                 case IDLE:
-                    // Garder la dernière direction ou utiliser l'image par défaut (bas)
                     if (currentP1Image == null) {
                         currentP1Image = P1B;
                     }
                     break;
             }
-        } else if (playerNumber == 2) {
-            // Pour l'instant, le joueur 2 garde le rendu par défaut
-            // Tu pourras implémenter ses images plus tard si tu veux
-            // currentP2Image = ...;
         }
     }
 
@@ -407,11 +384,9 @@ public class BombermanController implements Initializable {
 
         Position bombPos = new Position(player.pos.x + kickDirection.x, player.pos.y + kickDirection.y);
 
-        // Trouver la bombe à cette position
         Bomb bombToKick = null;
         for (Bomb bomb : gameState.bombs) {
             if (bomb.pos.equals(bombPos)) {
-                // Ne pas kicker une bombe qui bouge déjà
                 if (!(bomb instanceof KickingBomb)) {
                     bombToKick = bomb;
                 }
@@ -421,12 +396,13 @@ public class BombermanController implements Initializable {
 
         if (bombToKick != null) {
             kickBomb(bombToKick, kickDirection);
+            soundManager.playSound("kick"); // Jouer le son de kick
         }
     }
 
     static class KickingBomb extends Bomb {
         Position direction;
-        int kickSpeed = 8; // Plus le nombre est grand, plus c'est lent
+        int kickSpeed = 8;
         int kickTimer = 0;
 
         KickingBomb(int x, int y, Player owner, Position direction) {
@@ -464,12 +440,10 @@ public class BombermanController implements Initializable {
     }
 
     private void kickBomb(Bomb bomb, Position direction) {
-        // Supprimer l'ancienne bombe de la liste
         gameState.bombs.remove(bomb);
 
-        // Créer une nouvelle bombe qui bouge
         KickingBomb kickingBomb = new KickingBomb(bomb.pos.x, bomb.pos.y, bomb.owner, direction);
-        kickingBomb.timer = bomb.timer; // Conserver le timer existant
+        kickingBomb.timer = bomb.timer;
 
         gameState.bombs.add(kickingBomb);
     }
@@ -483,7 +457,6 @@ public class BombermanController implements Initializable {
             return false;
         }
 
-        // Vérifier qu'il n'y a pas déjà une bombe à cette position
         for (Bomb bomb : gameState.bombs) {
             if (bomb.pos.equals(pos)) {
                 return false;
@@ -508,7 +481,6 @@ public class BombermanController implements Initializable {
             }
         }
 
-        // Vérifier que les joueurs ne se chevauchent pas
         if (pos.equals(gameState.player1.pos) || pos.equals(gameState.player2.pos)) {
             return false;
         }
@@ -527,6 +499,7 @@ public class BombermanController implements Initializable {
 
         gameState.bombs.add(new Bomb(bombPos.x, bombPos.y, player));
         player.bombsRemaining--;
+        soundManager.playSound("bomb_place"); // Jouer le son de placement de bombe
     }
 
     private void updateBombs() {
@@ -536,7 +509,6 @@ public class BombermanController implements Initializable {
             Bomb bomb = bombIterator.next();
             bomb.timer--;
 
-            // Gérer les bombes qui bougent
             if (bomb instanceof KickingBomb) {
                 KickingBomb kickingBomb = (KickingBomb) bomb;
                 if (kickingBomb.shouldMove()) {
@@ -548,13 +520,11 @@ public class BombermanController implements Initializable {
                     if (canMoveBombTo(newPos) && !isPlayerAt(newPos)) {
                         kickingBomb.pos = newPos;
                     } else {
-                        // La bombe s'arrête, on la convertit en bombe normale
                         Bomb stoppedBomb = new Bomb(kickingBomb.pos.x, kickingBomb.pos.y, kickingBomb.owner);
                         stoppedBomb.timer = kickingBomb.timer;
 
                         bombIterator.remove();
                         gameState.bombs.add(stoppedBomb);
-                        // On continue avec la boucle suivante pour éviter les problèmes
                         continue;
                     }
                 }
@@ -595,12 +565,10 @@ public class BombermanController implements Initializable {
 
                 gameState.explosions.add(new Explosion(newX, newY));
 
-                // Vérifier si c'est un mur destructible
                 if (gameState.destructibleWalls.contains(explPos)) {
                     gameState.destructibleWalls.remove(explPos);
                     bomb.owner.score += 10;
 
-                    // Révéler l'objet s'il y en a un
                     Item hiddenItem = gameState.hiddenItems.get(explPos);
                     if (hiddenItem != null) {
                         gameState.visibleItems.put(explPos, hiddenItem);
@@ -610,6 +578,7 @@ public class BombermanController implements Initializable {
                 }
             }
         }
+        soundManager.playSound("explosion"); // Jouer le son d'explosion
     }
 
     private void updateExplosions() {
@@ -622,7 +591,6 @@ public class BombermanController implements Initializable {
     private void checkPlayersHit() {
         long currentTime = System.currentTimeMillis();
 
-        // Vérifier si l'invincibilité est terminée
         if (gameState.player1.isInvulnerable && currentTime >= gameState.player1.invulnerabilityEndTime) {
             gameState.player1.isInvulnerable = false;
         }
@@ -631,7 +599,6 @@ public class BombermanController implements Initializable {
         }
 
         for (Explosion explosion : gameState.explosions) {
-            // Vérifier joueur 1 (seulement s'il n'est pas invulnérable)
             if (explosion.pos.equals(gameState.player1.pos) && !gameState.player1.isInvulnerable) {
                 gameState.player1.lives--;
                 if (gameState.player1.lives <= 0) {
@@ -639,10 +606,10 @@ public class BombermanController implements Initializable {
                 } else {
                     resetPlayerBonuses(gameState.player1);
                     respawnPlayer(gameState.player1, 1);
+                    soundManager.playSound("death"); // Jouer le son de mort
                 }
             }
 
-            // Vérifier joueur 2 (seulement s'il n'est pas invulnérable)
             if (explosion.pos.equals(gameState.player2.pos) && !gameState.player2.isInvulnerable) {
                 gameState.player2.lives--;
                 if (gameState.player2.lives <= 0) {
@@ -650,57 +617,54 @@ public class BombermanController implements Initializable {
                 } else {
                     resetPlayerBonuses(gameState.player2);
                     respawnPlayer(gameState.player2, 2);
+                    soundManager.playSound("death"); // Jouer le son de mort
                 }
             }
         }
     }
 
     private void resetPlayerBonuses(Player player) {
-        // Réinitialiser tous les bonus aux valeurs par défaut
         player.bombRange = 2;
         player.speedMultiplier = 1.0;
         player.maxBombs = 3;
         player.bombsRemaining = 3;
 
-        // Réinitialiser les compteurs de bonus
         player.feuBonusCount = 0;
         player.vitesseBonusCount = 0;
         player.bombeBonusCount = 0;
-        player.kickBonusCount = 0; // NOUVEAU
-        player.canKick = false; // NOUVEAU
+        player.kickBonusCount = 0;
+        player.canKick = false;
     }
 
     private void checkItemPickup() {
-        // Vérifier pour le joueur 1
         checkItemPickupForPlayer(gameState.player1);
-
-        // Vérifier pour le joueur 2
         checkItemPickupForPlayer(gameState.player2);
     }
 
     private void checkItemPickupForPlayer(Player player) {
         Item item = gameState.visibleItems.get(player.pos);
         if (item != null) {
-            // Appliquer l'effet de l'objet
             switch (item.type) {
                 case FEU:
                     player.bombRange++;
                     player.feuBonusCount++;
                     player.score += 50;
+                    soundManager.playSound("pickup"); // Jouer le son de ramassage
                     break;
                 case VITESSE:
                     player.speedMultiplier += 0.3;
                     player.vitesseBonusCount++;
                     player.score += 30;
+                    soundManager.playSound("pickup"); // Jouer le son de ramassage
                     break;
                 case BOMBE:
                     player.maxBombs++;
                     player.bombsRemaining++;
                     player.bombeBonusCount++;
                     player.score += 40;
+                    soundManager.playSound("pickup"); // Jouer le son de ramassage
                     break;
                 case SKULL:
-                    // Le skull fait perdre une vie au joueur
                     player.lives--;
                     if (player.lives <= 0) {
                         String winner = (player == gameState.player1) ? "Joueur 2 gagne !" : "Joueur 1 gagne !";
@@ -712,15 +676,15 @@ public class BombermanController implements Initializable {
                     }
                     break;
                 case KICK:
-                    if (player.kickBonusCount < 2) { // Maximum 2 kick items
+                    if (player.kickBonusCount < 2) {
                         player.kickBonusCount++;
                         player.canKick = true;
                         player.score += 60;
+                        soundManager.playSound("pickup"); // Jouer le son de ramassage
                     }
                     break;
             }
 
-            // Retirer l'objet de la map
             gameState.visibleItems.remove(player.pos);
         }
     }
@@ -732,9 +696,8 @@ public class BombermanController implements Initializable {
             player.pos = new Position(GRID_SIZE - 2, GRID_SIZE - 2);
         }
 
-        // Activer l'invincibilité pour 3 secondes
         player.isInvulnerable = true;
-        player.invulnerabilityEndTime = System.currentTimeMillis() + 2000; // 3 secondes
+        player.invulnerabilityEndTime = System.currentTimeMillis() + 2000;
     }
 
     private void gameOver(String message) {
@@ -744,17 +707,20 @@ public class BombermanController implements Initializable {
         if (gameTimer != null) {
             gameTimer.stop();
         }
+        if (message.contains("gagne")) {
+            soundManager.playSound("win"); // Jouer le son de victoire
+        } else {
+            soundManager.playSound("lose"); // Jouer le son de défaite
+        }
+        soundManager.stopBackgroundMusic(); // Arrêter la musique de fond
         System.out.println("Game Over: " + message);
-        // Ici vous pourriez afficher un écran de game over avec le message
     }
 
     private void updateUI() {
-        // UI pour le joueur 1
         bombsLabel.setText("J1 Bombes: " + gameState.player1.bombsRemaining + "/" + gameState.player1.maxBombs);
         scoreLabel.setText("J1 Score: " + gameState.player1.score + " | J2 Score: " + gameState.player2.score);
         levelLabel.setText("Niveau: " + gameState.level);
 
-        // Afficher le nombre de vies pour chaque joueur
         if (livesLabel != null) {
             livesLabel.setText("x" + gameState.player1.lives);
         }
@@ -763,27 +729,24 @@ public class BombermanController implements Initializable {
             livesLabel2.setText("x" + gameState.player2.lives);
         }
 
-        // Afficher les bonus actuels pour les deux joueurs
         if (bonusLabel != null) {
             String bonusText = String.format("J1 - Feu: %d | Vitesse: %d | Bombe: %d | Kick: %d || J2 - Feu: %d | Vitesse: %d | Bombe: %d | Kick: %d",
                     gameState.player1.feuBonusCount,
                     gameState.player1.vitesseBonusCount,
                     gameState.player1.bombeBonusCount,
-                    gameState.player1.kickBonusCount, // NOUVEAU
+                    gameState.player1.kickBonusCount,
                     gameState.player2.feuBonusCount,
                     gameState.player2.vitesseBonusCount,
                     gameState.player2.bombeBonusCount,
-                    gameState.player2.kickBonusCount); // NOUVEAU
+                    gameState.player2.kickBonusCount);
             bonusLabel.setText(bonusText);
         }
     }
 
     private void render() {
-        // Fond
         gc.setFill(Color.web("#2E7D32"));
         gc.fillRect(0, 0, gameCanvas.getWidth(), gameCanvas.getHeight());
 
-        // Grille
         gc.setStroke(Color.web("#1B5E20"));
         gc.setLineWidth(1);
         for (int i = 0; i <= GRID_SIZE; i++) {
@@ -791,7 +754,6 @@ public class BombermanController implements Initializable {
             gc.strokeLine(0, i * CELL_SIZE, gameCanvas.getWidth(), i * CELL_SIZE);
         }
 
-        // Objets visibles
         for (Map.Entry<Position, Item> entry : gameState.visibleItems.entrySet()) {
             Position pos = entry.getKey();
             Item item = entry.getValue();
@@ -818,7 +780,6 @@ public class BombermanController implements Initializable {
             if (itemImage != null) {
                 gc.drawImage(itemImage, pos.x * CELL_SIZE, pos.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
             } else {
-                // Fallback avec des couleurs
                 switch (item.type) {
                     case FEU:
                         gc.setFill(Color.web("#FF4444"));
@@ -833,25 +794,22 @@ public class BombermanController implements Initializable {
                         gc.setFill(Color.web("#8B008B"));
                         break;
                     case KICK:
-                        gc.setFill(Color.web("#FFD700")); // Couleur dorée
+                        gc.setFill(Color.web("#FFD700"));
                         break;
                 }
                 gc.fillOval(pos.x * CELL_SIZE + 8, pos.y * CELL_SIZE + 8, CELL_SIZE - 16, CELL_SIZE - 16);
             }
         }
 
-        // Murs indestructibles
         gc.setFill(Color.web("#424242"));
         for (Position wall : gameState.walls) {
             gc.fillRect(wall.x * CELL_SIZE, wall.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
-            // Effet 3D
             gc.setFill(Color.web("#616161"));
             gc.fillRect(wall.x * CELL_SIZE, wall.y * CELL_SIZE, CELL_SIZE, 3);
             gc.fillRect(wall.x * CELL_SIZE, wall.y * CELL_SIZE, 3, CELL_SIZE);
             gc.setFill(Color.web("#424242"));
         }
 
-        // Murs destructibles
         for (Position wall : gameState.destructibleWalls) {
             if (brickImage != null) {
                 gc.drawImage(brickImage, wall.x * CELL_SIZE, wall.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
@@ -865,13 +823,10 @@ public class BombermanController implements Initializable {
             }
         }
 
-        // Explosions - Utiliser le GIF d'explosion
         for (Explosion explosion : gameState.explosions) {
             if (fireball != null) {
-                // Utiliser l'image GIF d'explosion
                 gc.drawImage(fireball, explosion.pos.x * CELL_SIZE, explosion.pos.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
             } else {
-                // Fallback avec animation de couleur
                 double intensity = (double) explosion.timer / 30;
                 Color explosionColor = Color.web("#FF5722").interpolate(Color.web("#FFEB3B"), 1 - intensity);
                 gc.setFill(explosionColor);
@@ -882,22 +837,18 @@ public class BombermanController implements Initializable {
             }
         }
 
-        // Bombes
         for (Bomb bomb : gameState.bombs) {
             if (explosionGifImage != null) {
                 gc.drawImage(explosionGifImage, bomb.pos.x * CELL_SIZE, bomb.pos.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
 
-                // Ajouter un effet pour les bombes qui bougent
                 if (bomb instanceof KickingBomb) {
-                    gc.setFill(Color.web("#FFD700", 0.3)); // Halo doré semi-transparent
+                    gc.setFill(Color.web("#FFD700", 0.3));
                     gc.fillOval(bomb.pos.x * CELL_SIZE + 2, bomb.pos.y * CELL_SIZE + 2, CELL_SIZE - 4, CELL_SIZE - 4);
                 }
             } else {
-                // Fallback
                 boolean blink = bomb.timer < 60 && (bomb.timer / 10) % 2 == 0;
                 Color bombColor = blink ? Color.web("#F44336") : Color.web("#212121");
 
-                // Couleur différente pour les bombes qui bougent
                 if (bomb instanceof KickingBomb) {
                     bombColor = blink ? Color.web("#FF9800") : Color.web("#424242");
                 }
@@ -905,16 +856,13 @@ public class BombermanController implements Initializable {
                 gc.setFill(bombColor);
                 gc.fillOval(bomb.pos.x * CELL_SIZE + 8, bomb.pos.y * CELL_SIZE + 8, CELL_SIZE - 16, CELL_SIZE - 16);
 
-                // Mèche
                 gc.setFill(Color.web("#FF9800"));
                 gc.fillRect(bomb.pos.x * CELL_SIZE + CELL_SIZE/2 - 1, bomb.pos.y * CELL_SIZE + 5, 2, 8);
             }
         }
 
-        // Joueur 1 - avec effet de clignotement si invulnérable
         boolean shouldDrawPlayer1 = true;
         if (gameState.player1.isInvulnerable) {
-            // Faire clignoter le joueur (visible/invisible toutes les 200ms)
             shouldDrawPlayer1 = (System.currentTimeMillis() / 200) % 2 == 0;
         }
 
@@ -926,7 +874,6 @@ public class BombermanController implements Initializable {
                         CELL_SIZE,
                         CELL_SIZE);
             } else {
-                // Fallback si les images ne se chargent pas
                 gc.setFill(Color.web("#2196F3"));
                 gc.fillOval(gameState.player1.pos.x * CELL_SIZE + 5,
                         gameState.player1.pos.y * CELL_SIZE + 5,
@@ -938,10 +885,8 @@ public class BombermanController implements Initializable {
             }
         }
 
-        // Joueur 2 - avec effet de clignotement si invulnérable
         boolean shouldDrawPlayer2 = true;
         if (gameState.player2.isInvulnerable) {
-            // Faire clignoter le joueur (visible/invisible toutes les 200ms)
             shouldDrawPlayer2 = (System.currentTimeMillis() / 200) % 2 == 0;
         }
 
@@ -957,12 +902,10 @@ public class BombermanController implements Initializable {
         }
     }
 
-    // Énumération pour les types d'objets
     enum ItemType {
         FEU, VITESSE, BOMBE, SKULL, KICK
     }
 
-    // Classes de données
     static class Position {
         int x, y;
         Position(int x, int y) { this.x = x; this.y = y; }
@@ -986,14 +929,12 @@ public class BombermanController implements Initializable {
         double speedMultiplier = 1.0;
         int score = 0;
 
-        // Compteurs de bonus
         int feuBonusCount = 0;
         int vitesseBonusCount = 0;
         int bombeBonusCount = 0;
-        int kickBonusCount = 0; // NOUVEAU
-        boolean canKick = false; // NOUVEAU
+        int kickBonusCount = 0;
+        boolean canKick = false;
 
-        // Nouvelles variables pour l'invincibilité
         boolean isInvulnerable = false;
         long invulnerabilityEndTime = 0;
 
@@ -1040,7 +981,6 @@ public class BombermanController implements Initializable {
         }
 
         private void initializeMap() {
-            // Créer les murs fixes
             for (int i = 0; i < GRID_SIZE; i++) {
                 for (int j = 0; j < GRID_SIZE; j++) {
                     if (i == 0 || i == GRID_SIZE - 1 || j == 0 || j == GRID_SIZE - 1) {
@@ -1051,7 +991,6 @@ public class BombermanController implements Initializable {
                 }
             }
 
-            // Créer les murs destructibles
             List<Position> availablePositions = new ArrayList<>();
             Random random = new Random();
 
@@ -1067,22 +1006,17 @@ public class BombermanController implements Initializable {
                 }
             }
 
-            // Placer les objets aléatoirement dans les murs destructibles
             placeItems(availablePositions, random);
         }
 
         private boolean isStartingArea(Position pos) {
-            // Zone de départ joueur 1 (coin haut-gauche)
             if (pos.x <= 2 && pos.y <= 2) return true;
-
-            // Zone de départ joueur 2 (coin bas-droite)
             if (pos.x >= GRID_SIZE - 3 && pos.y >= GRID_SIZE - 3) return true;
-
             return false;
         }
 
         private void placeItems(List<Position> availablePositions, Random random) {
-            if (availablePositions.size() < 19) { // Augmenté de 17 à 19
+            if (availablePositions.size() < 19) {
                 System.err.println("Pas assez de murs destructibles pour placer tous les objets");
                 return;
             }
@@ -1091,27 +1025,22 @@ public class BombermanController implements Initializable {
 
             int index = 0;
 
-            // Placer 4 objets feu
             for (int i = 0; i < 4 && index < availablePositions.size(); i++, index++) {
                 hiddenItems.put(availablePositions.get(index), new Item(ItemType.FEU));
             }
 
-            // Placer 4 objets vitesse
             for (int i = 0; i < 4 && index < availablePositions.size(); i++, index++) {
                 hiddenItems.put(availablePositions.get(index), new Item(ItemType.VITESSE));
             }
 
-            // Placer 8 objets bombe
             for (int i = 0; i < 8 && index < availablePositions.size(); i++, index++) {
                 hiddenItems.put(availablePositions.get(index), new Item(ItemType.BOMBE));
             }
 
-            // Placer 2 objets kick - NOUVEAU
             for (int i = 0; i < 2 && index < availablePositions.size(); i++, index++) {
                 hiddenItems.put(availablePositions.get(index), new Item(ItemType.KICK));
             }
 
-            // Placer 1 skull
             if (index < availablePositions.size()) {
                 hiddenItems.put(availablePositions.get(index), new Item(ItemType.SKULL));
             }

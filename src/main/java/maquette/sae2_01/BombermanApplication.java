@@ -20,7 +20,7 @@ import java.util.Set;
 public class BombermanApplication extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("bomberman2.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("bomberman.fxml"));
         Scene scene = new Scene(loader.load());
         scene.getStylesheets().add(getClass().getResource("bomberman.css").toExternalForm());
 
@@ -32,7 +32,7 @@ public class BombermanApplication extends Application {
         primaryStage.show();
 
         // Donner le focus au contrôleur pour la gestion des touches
-        BombermanController2 controller = loader.getController();
+        BombermanController controller = loader.getController();
         controller.requestFocus();
     }
 
