@@ -4,6 +4,9 @@
     src: url("fonts/VT323-Regular.ttf");
 }
 
+.label {
+    -fx-font-size: 25px;
+}
 
 #titleLabel {
     -fx-font-size: 56px;

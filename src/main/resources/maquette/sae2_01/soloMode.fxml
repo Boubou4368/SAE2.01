@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<StackPane xmlns:fx="http://javafx.com/fxml" fx:controller="maquette.sae2_01.SoloModeController" stylesheets="@menu.css" styleClass="fond-stackpane">
+    <Label fx:id="titleLabel" text="Bomberman" id="titleLabel" styleClass="menu-vbox" StackPane.alignment="TOP_CENTER"/>
+    <VBox alignment="CENTER" spacing="20">
+        <Label text="Choisir le Mode" styleClass="label"/>
+        <Button text="Normal" onAction="#onNormal" styleClass="menu-button"/>
+        <Button text="Capture The Flag" onAction="#onCTF" styleClass="menu-button"/>
+        <Button text="Quitter" onAction="#onQuit" styleClass="menu-button"/>
+    </VBox>
+</StackPane>

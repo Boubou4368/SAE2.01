@@ -26,19 +26,18 @@ public class MenuController {
     @FXML
     private void onPlay(ActionEvent event) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("bomberman.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("soloMode.fxml"));
             Scene gameScene = new Scene(loader.load());
 
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(gameScene);
-            stage.setTitle("Bomberman");
+            stage.setTitle("Choisir le mode");
             stage.setWidth(600);
-            stage.setHeight(800);
+            stage.setHeight(500);
             stage.show();
 
             // Donne le focus au canvas pour les touches clavier
-            BombermanController controller = loader.getController();
-            controller.requestFocus();
+            SoloModeController controller = loader.getController();
 
         } catch (Exception e) {
             e.printStackTrace();
