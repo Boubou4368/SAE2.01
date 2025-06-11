@@ -17,8 +17,8 @@ L : J
 R : L
 B : U
 J4 :
-U : M
-D : Colon
-L : Semicolon
-R : Exclamation Mark
-B : Shift
+U : UP
+D : DOWN
+L : LEFT
+R : RIGHT
+B : ENTER
