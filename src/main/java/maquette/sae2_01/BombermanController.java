@@ -22,7 +22,6 @@ public class BombermanController implements Initializable {
     @FXML
     private Canvas gameCanvas;
     @FXML private Label bombsLabel;
-    @FXML private Label scoreLabel;
     @FXML private Label levelLabel;
     @FXML private Label livesLabel;
     @FXML private Label livesLabel2;
@@ -37,6 +36,10 @@ public class BombermanController implements Initializable {
 
     private static final int GRID_SIZE = 15;
     private static final int CELL_SIZE = 40;
+
+    private boolean isPlayerAt(Position pos) {
+        return pos.equals(gameState.player1.pos) || pos.equals(gameState.player2.pos);
+    }
 
     private GraphicsContext gc;
     private GameState gameState;
@@ -336,7 +339,7 @@ public class BombermanController implements Initializable {
             } else {
                 lastMoveTimeP2 = currentTime;
             }
-            soundManager.playSound("walk"); // Jouer le son de pas
+            //soundManager.playSound(""); // Jouer le son de pas
         }
 
         if (player.canKick && moved) {
@@ -538,10 +541,6 @@ public class BombermanController implements Initializable {
         }
     }
 
-    private boolean isPlayerAt(Position pos) {
-        return pos.equals(gameState.player1.pos) || pos.equals(gameState.player2.pos);
-    }
-
     private void explodeBomb(Bomb bomb) {
         int range = bomb.owner.bombRange;
 
@@ -578,7 +577,9 @@ public class BombermanController implements Initializable {
                 }
             }
         }
-        soundManager.playSound("explosion"); // Jouer le son d'explosion
+
+        // LE SON D'EXPLOSION EST JOUÉ ICI
+        soundManager.playSound("explosion");
     }
 
     private void updateExplosions() {
@@ -718,7 +719,6 @@ public class BombermanController implements Initializable {
 
     private void updateUI() {
         bombsLabel.setText("J1 Bombes: " + gameState.player1.bombsRemaining + "/" + gameState.player1.maxBombs);
-        scoreLabel.setText("J1 Score: " + gameState.player1.score + " | J2 Score: " + gameState.player2.score);
         levelLabel.setText("Niveau: " + gameState.level);
 
         if (livesLabel != null) {
