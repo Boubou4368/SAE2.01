@@ -708,6 +708,7 @@ public class BombermanController implements Initializable {
         player.setPos(spawnPositions[playerIndex]);
         player.setIsInvulnerable(true);
         player.setInvulnerabilityEndTime(System.currentTimeMillis() + 3000);
+        player.setBlinking(true);
     }
 
     private void checkItemPickup() {
@@ -1002,25 +1003,27 @@ public class BombermanController implements Initializable {
                 Image playerImage = getPlayerImage(i);
 
                 if (playerImage != null) {
-                    // Afficher l'image GIF du joueur
-                    gc.drawImage(playerImage,
-                            player.getPos().getX() * CELL_SIZE,
-                            player.getPos().getY() * CELL_SIZE,
-                            CELL_SIZE,
-                            CELL_SIZE);
-
                     // Effet de clignotement si le joueur est invulnérable
                     if (player.getIsInvulnerable()) {
                         long currentTime = System.currentTimeMillis();
-                        if ((currentTime / 200) % 2 == 0) { // Clignotement toutes les 200ms
-                            gc.setGlobalAlpha(0.5);
+                        boolean shouldShow = (currentTime / 200) % 2 == 0; // Clignotement toutes les 200ms
+
+                        if (shouldShow) {
+                            // Afficher l'image GIF du joueur normalement
                             gc.drawImage(playerImage,
                                     player.getPos().getX() * CELL_SIZE,
                                     player.getPos().getY() * CELL_SIZE,
                                     CELL_SIZE,
                                     CELL_SIZE);
-                            gc.setGlobalAlpha(1.0);
                         }
+                        // Si shouldShow est false, on ne dessine rien (effet de clignotement)
+                    } else {
+                        // Joueur normal (pas invulnérable), affichage normal
+                        gc.drawImage(playerImage,
+                                player.getPos().getX() * CELL_SIZE,
+                                player.getPos().getY() * CELL_SIZE,
+                                CELL_SIZE,
+                                CELL_SIZE);
                     }
                 }
             }
