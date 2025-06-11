@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<StackPane xmlns:fx="http://javafx.com/fxml" fx:controller="maquette.sae2_01.ParametreController" stylesheets="@menu.css" styleClass="fond-stackpane">
+    <Label fx:id="titleLabel" text="Bomberman" id="titleLabel" styleClass="menu-vbox" StackPane.alignment="TOP_CENTER"/>
+    <VBox alignment="CENTER" spacing="20">
+        <Button fx:id="J1"  text="Touches Joueur 1" onAction="#onTJ" styleClass="menu-button"/>
+        <Button fx:id="J2"  text="Touches Joueur 2" onAction="#onTJ" styleClass="menu-button"/>
+        <Button fx:id="J3"  text="Touches Joueur 3" onAction="#onTJ" styleClass="menu-button"/>
+        <Button fx:id="J4"  text="Touches Joueur 4" onAction="#onTJ" styleClass="menu-button"/>
+        <Button text="Quitter" onAction="#onQuit" styleClass="menu-button"/>
+    </VBox>
+</StackPane>

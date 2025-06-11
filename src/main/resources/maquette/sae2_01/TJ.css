@@ -1,0 +1,23 @@
+.button {
+    -fx-font-size: 14px;
+    -fx-padding: 10 20;
+}
+
+.bouton-actif {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: black;
+}
+.menu-button {
+    -fx-font-size: 18px;
+    -fx-padding: 10 20;
+    -fx-background-color: #333;
+    -fx-text-fill: white;
+    -fx-background-radius: 10;
+    -fx-border-radius: 30;
+    -fx-border-width: 1000;
+    -fx-min-width: 200;
+}
+
+.lblInfo {
+    -fx-font-size: 20px;
+}
