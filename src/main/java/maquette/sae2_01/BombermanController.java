@@ -27,7 +27,8 @@ import javafx.stage.Stage;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 
-
+import java.io.File;
+import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.util.*;
@@ -40,8 +41,10 @@ public class BombermanController implements Initializable {
     @FXML private Label levelLabel;
     @FXML private Label profileLabel;
 
-
-    private String currentProfile = "";
+    private String player1Profile = "";
+    private String player2Profile = "";
+    private String player3Profile = "";
+    private String player4Profile = "";
     private List<PlayerProfile> profileList = new ArrayList<>();
 
     private static final int GRID_SIZE = 15;
@@ -56,6 +59,8 @@ public class BombermanController implements Initializable {
     private static final long MOVE_DELAY = 150_000_000; // 150ms en nanosecondes
 
     private Stage primaryStage;
+    private boolean gameStarted = false;
+
     public void setPrimaryStage(Stage stage) {
         this.primaryStage = stage;
     }
@@ -63,59 +68,248 @@ public class BombermanController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         gc = gameCanvas.getGraphicsContext2D();
+        loadProfilesFromFile();
+        
+        // Afficher l'écran de saisie des profils au lieu de démarrer directement
+        Platform.runLater(() -> showProfileSelectionScreen());
+    }
+
+    private void showProfileSelectionScreen() {
+        VBox mainBox = new VBox(20);
+        mainBox.setAlignment(Pos.CENTER);
+        mainBox.setPrefSize(800, 600);
+        mainBox.setStyle("-fx-background-color: #2E7D32;");
+
+        Label titleLabel = new Label("BOMBERMAN - SÉLECTION DES PROFILS");
+        titleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 28px; -fx-font-weight: bold;");
+
+        // Saisie Joueur 1
+        VBox player1Box = new VBox(10);
+        player1Box.setAlignment(Pos.CENTER);
+        Label player1Label = new Label("Joueur 1 (ZQSD + ESPACE):");
+        player1Label.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+        TextField player1Field = new TextField();
+        player1Field.setPromptText("Nom du profil joueur 1");
+        player1Field.setMaxWidth(200);
+        player1Box.getChildren().addAll(player1Label, player1Field);
+
+        // Saisie Joueur 2
+        VBox player2Box = new VBox(10);
+        player2Box.setAlignment(Pos.CENTER);
+        Label player2Label = new Label("Joueur 2 (Flèches + ENTRÉE):");
+        player2Label.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+        TextField player2Field = new TextField();
+        player2Field.setPromptText("Nom du profil joueur 2");
+        player2Field.setMaxWidth(200);
+        player2Box.getChildren().addAll(player2Label, player2Field);
+
+        // Saisie Joueur 3
+        VBox player3Box = new VBox(10);
+        player3Box.setAlignment(Pos.CENTER);
+        Label player3Label = new Label("Joueur 3 (IJKL + SHIFT):");
+        player3Label.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+        TextField player3Field = new TextField();
+        player3Field.setPromptText("Nom du profil joueur 3");
+        player3Field.setMaxWidth(200);
+        player3Box.getChildren().addAll(player3Label, player3Field);
+
+        // Saisie Joueur 4
+        VBox player4Box = new VBox(10);
+        player4Box.setAlignment(Pos.CENTER);
+        Label player4Label = new Label("Joueur 4 (TFGH + TAB):");
+        player4Label.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+        TextField player4Field = new TextField();
+        player4Field.setPromptText("Nom du profil joueur 4");
+        player4Field.setMaxWidth(200);
+        player4Box.getChildren().addAll(player4Label, player4Field);
+
+        // Container pour les boutons
+        HBox buttonBox = new HBox(20);
+        buttonBox.setAlignment(Pos.CENTER);
+
+        Button startButton = new Button("COMMENCER LA PARTIE");
+        startButton.setStyle("-fx-font-size: 18px; -fx-padding: 10px 20px;");
+        startButton.setOnAction(e -> {
+            String p1Name = player1Field.getText().trim();
+            String p2Name = player2Field.getText().trim();
+            String p3Name = player3Field.getText().trim();
+            String p4Name = player4Field.getText().trim();
+
+            if (p1Name.isEmpty() || p2Name.isEmpty() || p3Name.isEmpty() || p4Name.isEmpty()) {
+                return; // Ne pas commencer si les noms sont vides
+            }
+
+            player1Profile = p1Name;
+            player2Profile = p2Name;
+            player3Profile = p3Name;
+            player4Profile = p4Name;
+
+            // Créer ou récupérer les profils
+            createOrGetProfile(p1Name);
+            createOrGetProfile(p2Name);
+            createOrGetProfile(p3Name);
+            createOrGetProfile(p4Name);
+
+            startGame();
+        });
+
+        Button statsButton = new Button("VOIR LES STATISTIQUES");
+        statsButton.setStyle("-fx-font-size: 18px; -fx-padding: 10px 20px;");
+        statsButton.setOnAction(e -> showPlayerStatsFromProfileSelection());
+
+        Button deleteProfileButton = new Button("SUPPRIMER UN PROFIL");
+        deleteProfileButton.setStyle("-fx-font-size: 18px; -fx-padding: 10px 20px;");
+        deleteProfileButton.setOnAction(e -> showDeleteProfileScreen());
+
+        buttonBox.getChildren().addAll(startButton, statsButton, deleteProfileButton);
+
+        mainBox.getChildren().addAll(titleLabel, player1Box, player2Box, player3Box, player4Box, buttonBox);
+
+        Scene profileScene = new Scene(mainBox);
+        primaryStage.setScene(profileScene);
+    }
+
+    private boolean deleteProfile(String name) {
+        boolean removed = profileList.removeIf(profile -> profile.name.equals(name));
+        if (removed) {
+            saveProfilesToFile();
+        }
+        return removed;
+    }
+
+    private void showDeleteProfileScreen() {
+        VBox deleteBox = new VBox(20);
+        deleteBox.setAlignment(Pos.CENTER);
+        deleteBox.setPrefSize(800, 600);
+        deleteBox.setStyle("-fx-background-color: #2E7D32;");
+
+        Label titleLabel = new Label("SUPPRIMER UN PROFIL");
+        titleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;");
+
+        TextField nameField = new TextField();
+        nameField.setPromptText("Nom du profil à supprimer");
+        nameField.setMaxWidth(250);
+
+        Label resultLabel = new Label();
+        resultLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+
+        Button confirmButton = new Button("SUPPRIMER");
+        confirmButton.setStyle("-fx-font-size: 16px;");
+        confirmButton.setOnAction(e -> {
+            String nameToDelete = nameField.getText().trim();
+            boolean removed = deleteProfile(nameToDelete);
+            if (removed) {
+                resultLabel.setText("Profil supprimé avec succès.");
+            } else {
+                resultLabel.setText("Profil introuvable.");
+            }
+        });
+
+        Button backButton = new Button("Retour");
+        backButton.setOnAction(e -> showProfileSelectionScreen());
+
+        deleteBox.getChildren().addAll(titleLabel, nameField, confirmButton, resultLabel, backButton);
+
+        Scene deleteScene = new Scene(deleteBox);
+        primaryStage.setScene(deleteScene);
+    }
+
+    private void showPlayerStatsFromProfileSelection() {
+        // Trier par ratio de victoires
+        profileList.sort((a, b) -> Double.compare(b.getWinRate(), a.getWinRate()));
+
+        VBox statsBox = new VBox(15);
+        statsBox.setAlignment(Pos.CENTER);
+        statsBox.setPrefSize(800, 600);
+        statsBox.setStyle("-fx-background-color: #2E7D32;");
+
+        Label title = new Label("CLASSEMENT DES JOUEURS");
+        title.setStyle("-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;");
+
+        VBox playersBox = new VBox(10);
+        playersBox.setAlignment(Pos.CENTER);
+
+        if (profileList.isEmpty()) {
+            Label noDataLabel = new Label("Aucune statistique disponible");
+            noDataLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+            playersBox.getChildren().add(noDataLabel);
+        } else {
+            int rank = 1;
+            for (PlayerProfile profile : profileList) {
+                String statsText = String.format("%d. %s - %d V / %d D (%.1f%%)",
+                    rank++, profile.name, profile.victories, profile.defeats, profile.getWinRate());
+                Label statsLabel = new Label(statsText);
+                statsLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+                playersBox.getChildren().add(statsLabel);
+            }
+        }
+
+        Button backButton = new Button("Retour à la sélection");
+        backButton.setStyle("-fx-font-size: 16px; -fx-padding: 8px 16px;");
+        backButton.setOnAction(e -> showProfileSelectionScreen());
+
+        statsBox.getChildren().addAll(title, playersBox, backButton);
+
+        Scene statsScene = new Scene(statsBox);
+        primaryStage.setScene(statsScene);
+    }
+
+    private void createOrGetProfile(String name) {
+        boolean found = false;
+        for (PlayerProfile profile : profileList) {
+            if (profile.name.equals(name)) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            profileList.add(new PlayerProfile(name));
+        }
+    }
+
+    private void startGame() {
         gameState = new GameState();
-        originalGameScene = gameCanvas.getScene();
-
-        loadScoresFromFile();
-
-        // Afficher l'écran de sélection de profil au démarrage
-        Platform.runLater(() -> showProfileSelection()); // NOUVEAU
-
 
         // Configurer le canvas pour recevoir les événements clavier
-        gameCanvas.setFocusTraversable(true);
+        if (gameCanvas != null) {
+            gameCanvas.setFocusTraversable(true);
+
+            // Revenir à la scène de jeu
+            Scene gameScene = gameCanvas.getScene();
+            if (gameScene != null) {
+                primaryStage.setScene(gameScene);
+            }
+        }
 
         startGameLoop();
         updateUI();
+        gameStarted = true;
+
+        Platform.runLater(() -> {
+            if (gameCanvas != null) {
+                gameCanvas.requestFocus();
+            }
+        });
     }
 
     public void requestFocus() {
-        gameCanvas.requestFocus();
+        if (gameCanvas != null) {
+            gameCanvas.requestFocus();
+        }
     }
 
-
-
-
     @FXML
-    private void handleKeyPressed(KeyEvent event) {pressedKeys.add(event.getCode());}
+    private void handleKeyPressed(KeyEvent event) {
+        if (gameStarted) {
+            pressedKeys.add(event.getCode());
+        }
+    }
+
     @FXML
     private void handleKeyReleased(KeyEvent event) {
-        pressedKeys.remove(event.getCode());
-    }
-
-    private void startGameLoop() {
-        gameLoop = new AnimationTimer() {
-            private long lastUpdate = 0;
-
-            @Override
-            public void handle(long now) {
-                if (now - lastUpdate >= 16_666_666) { // ~60 FPS
-                    update(now);
-                    render();
-                    updateUI();
-                    lastUpdate = now;
-                }
-            }
-        };
-        gameLoop.start();
-    }
-
-
-    private void startGame() {
-        // Configurer le canvas pour recevoir les événements clavier
-        gameCanvas.setFocusTraversable(true);
-        startGameLoop();
-        updateUI();
+        if (gameStarted) {
+            pressedKeys.remove(event.getCode());
+        }
     }
 
     private static class PlayerProfile {
@@ -152,63 +346,168 @@ public class BombermanController implements Initializable {
         }
     }
 
+    private void startGameLoop() {
+        if (gameLoop != null) {
+            gameLoop.stop();
+        }
 
+        gameLoop = new AnimationTimer() {
+            private long lastUpdate = 0;
 
+            @Override
+            public void handle(long now) {
+                if (now - lastUpdate >= 16_666_666) { // ~60 FPS
+                    update(now);
+                    render();
+                    updateUI();
+                    lastUpdate = now;
+                }
+            }
+        };
+        gameLoop.start();
+    }
 
     private void update(long currentTime) {
         handleInput(currentTime);
         updateBombs();
         updateExplosions();
-        checkPlayerHit();
-        checkVictoryCondition();
+        checkPlayersHit();
+        checkWinCondition();
     }
 
     private void handleInput(long currentTime) {
-        // Vérifier si assez de temps s'est écoulé depuis le dernier mouvement
         if (pressedKeys.contains(KeyCode.ESCAPE)) {
-            Platform.exit(); // Quitte proprement l'application
-            pressedKeys.remove(KeyCode.ESCAPE); // Pour ne pas quitter en boucle
+            Platform.exit();
+            pressedKeys.remove(KeyCode.ESCAPE);
             return;
         }
         if (pressedKeys.contains(KeyCode.X)) {
-            restartGame(); // méthode déjà créée précédemment
-            pressedKeys.remove(KeyCode.X); // pour ne pas le relancer en boucle
+            restartGame();
+            pressedKeys.remove(KeyCode.X);
             return;
         }
+
         if (currentTime - lastMoveTime < MOVE_DELAY) {
-            // On peut quand même placer des bombes même si on ne peut pas bouger
-            if (pressedKeys.contains(KeyCode.SPACE) && gameState.player.bombsRemaining > 0) {
-                placeBomb();
+            // Gestion des bombes uniquement si le délai n'est pas écoulé pour le mouvement
+            if (pressedKeys.contains(KeyCode.SPACE) && gameState.player1.bombsRemaining > 0 && gameState.player1.lives > 0) {
+                placeBomb(gameState.player1);
                 pressedKeys.remove(KeyCode.SPACE);
+            }
+            if (pressedKeys.contains(KeyCode.ENTER) && gameState.player2.bombsRemaining > 0 && gameState.player2.lives > 0) {
+                placeBomb(gameState.player2);
+                pressedKeys.remove(KeyCode.ENTER);
+            }
+            if (pressedKeys.contains(KeyCode.SHIFT) && gameState.player3.bombsRemaining > 0 && gameState.player3.lives > 0) {
+                placeBomb(gameState.player3);
+                pressedKeys.remove(KeyCode.SHIFT);
+            }
+            if (pressedKeys.contains(KeyCode.TAB) && gameState.player4.bombsRemaining > 0 && gameState.player4.lives > 0) {
+                placeBomb(gameState.player4);
+                pressedKeys.remove(KeyCode.TAB);
             }
             return;
         }
 
-        Position newPos = new Position(gameState.player.pos.x, gameState.player.pos.y);
-        boolean moved = false;
+        // Mouvement Joueur 1 (ZQSD)
+        if (gameState.player1.lives > 0) {
+            Position newPos1 = new Position(gameState.player1.pos.x, gameState.player1.pos.y);
+            boolean moved1 = false;
 
-        if (pressedKeys.contains(KeyCode.UP) || pressedKeys.contains(KeyCode.Z)) {
-            newPos.y--;
-            moved = true;
-        } else if (pressedKeys.contains(KeyCode.DOWN) || pressedKeys.contains(KeyCode.S)) {
-            newPos.y++;
-            moved = true;
-        } else if (pressedKeys.contains(KeyCode.LEFT) || pressedKeys.contains(KeyCode.Q)) {
-            newPos.x--;
-            moved = true;
-        } else if (pressedKeys.contains(KeyCode.RIGHT) || pressedKeys.contains(KeyCode.D)) {
-            newPos.x++;
-            moved = true;
+            if (pressedKeys.contains(KeyCode.Z)) {
+                newPos1.y--; moved1 = true;
+            } else if (pressedKeys.contains(KeyCode.S)) {
+                newPos1.y++; moved1 = true;
+            } else if (pressedKeys.contains(KeyCode.Q)) {
+                newPos1.x--; moved1 = true;
+            } else if (pressedKeys.contains(KeyCode.D)) {
+                newPos1.x++; moved1 = true;
+            }
+
+            if (moved1 && canMoveTo(newPos1)) {
+                gameState.player1.pos = newPos1;
+                lastMoveTime = currentTime;
+            }
         }
 
-        if (moved && canMoveTo(newPos)) {
-            gameState.player.pos = newPos;
-            lastMoveTime = currentTime; // Mettre à jour le temps du dernier mouvement
+        // Mouvement Joueur 2 (Flèches)
+        if (gameState.player2.lives > 0) {
+            Position newPos2 = new Position(gameState.player2.pos.x, gameState.player2.pos.y);
+            boolean moved2 = false;
+
+            if (pressedKeys.contains(KeyCode.UP)) {
+                newPos2.y--; moved2 = true;
+            } else if (pressedKeys.contains(KeyCode.DOWN)) {
+                newPos2.y++; moved2 = true;
+            } else if (pressedKeys.contains(KeyCode.LEFT)) {
+                newPos2.x--; moved2 = true;
+            } else if (pressedKeys.contains(KeyCode.RIGHT)) {
+                newPos2.x++; moved2 = true;
+            }
+
+            if (moved2 && canMoveTo(newPos2)) {
+                gameState.player2.pos = newPos2;
+                lastMoveTime = currentTime;
+            }
         }
 
-        if (pressedKeys.contains(KeyCode.SPACE) && gameState.player.bombsRemaining > 0) {
-            placeBomb();
+        // Mouvement Joueur 3 (IJKL)
+        if (gameState.player3.lives > 0) {
+            Position newPos3 = new Position(gameState.player3.pos.x, gameState.player3.pos.y);
+            boolean moved3 = false;
+
+            if (pressedKeys.contains(KeyCode.I)) {
+                newPos3.y--; moved3 = true;
+            } else if (pressedKeys.contains(KeyCode.K)) {
+                newPos3.y++; moved3 = true;
+            } else if (pressedKeys.contains(KeyCode.J)) {
+                newPos3.x--; moved3 = true;
+            } else if (pressedKeys.contains(KeyCode.L)) {
+                newPos3.x++; moved3 = true;
+            }
+
+            if (moved3 && canMoveTo(newPos3)) {
+                gameState.player3.pos = newPos3;
+                lastMoveTime = currentTime;
+            }
+        }
+
+        // Mouvement Joueur 4 (TFGH)
+        if (gameState.player4.lives > 0) {
+            Position newPos4 = new Position(gameState.player4.pos.x, gameState.player4.pos.y);
+            boolean moved4 = false;
+
+            if (pressedKeys.contains(KeyCode.T)) {
+                newPos4.y--; moved4 = true;
+            } else if (pressedKeys.contains(KeyCode.G)) {
+                newPos4.y++; moved4 = true;
+            } else if (pressedKeys.contains(KeyCode.F)) {
+                newPos4.x--; moved4 = true;
+            } else if (pressedKeys.contains(KeyCode.H)) {
+                newPos4.x++; moved4 = true;
+            }
+
+            if (moved4 && canMoveTo(newPos4)) {
+                gameState.player4.pos = newPos4;
+                lastMoveTime = currentTime;
+            }
+        }
+
+        // Placement des bombes
+        if (pressedKeys.contains(KeyCode.SPACE) && gameState.player1.bombsRemaining > 0 && gameState.player1.lives > 0) {
+            placeBomb(gameState.player1);
             pressedKeys.remove(KeyCode.SPACE);
+        }
+        if (pressedKeys.contains(KeyCode.ENTER) && gameState.player2.bombsRemaining > 0 && gameState.player2.lives > 0) {
+            placeBomb(gameState.player2);
+            pressedKeys.remove(KeyCode.ENTER);
+        }
+        if (pressedKeys.contains(KeyCode.SHIFT) && gameState.player3.bombsRemaining > 0 && gameState.player3.lives > 0) {
+            placeBomb(gameState.player3);
+            pressedKeys.remove(KeyCode.SHIFT);
+        }
+        if (pressedKeys.contains(KeyCode.TAB) && gameState.player4.bombsRemaining > 0 && gameState.player4.lives > 0) {
+            placeBomb(gameState.player4);
+            pressedKeys.remove(KeyCode.TAB);
         }
     }
 
@@ -230,8 +529,8 @@ public class BombermanController implements Initializable {
         return true;
     }
 
-    private void placeBomb() {
-        Position bombPos = new Position(gameState.player.pos.x, gameState.player.pos.y);
+    private void placeBomb(Player player) {
+        Position bombPos = new Position(player.pos.x, player.pos.y);
 
         for (Bomb bomb : gameState.bombs) {
             if (bomb.pos.equals(bombPos)) {
@@ -239,8 +538,8 @@ public class BombermanController implements Initializable {
             }
         }
 
-        gameState.bombs.add(new Bomb(bombPos.x, bombPos.y));
-        gameState.player.bombsRemaining--;
+        gameState.bombs.add(new Bomb(bombPos.x, bombPos.y, player));
+        player.bombsRemaining--;
     }
 
     private void updateBombs() {
@@ -253,13 +552,13 @@ public class BombermanController implements Initializable {
             if (bomb.timer <= 0) {
                 explodeBomb(bomb);
                 bombIterator.remove();
-                gameState.player.bombsRemaining++;
+                bomb.owner.bombsRemaining++;
             }
         }
     }
 
     private void explodeBomb(Bomb bomb) {
-        int range = gameState.player.bombRange;
+        int range = bomb.owner.bombRange;
 
         gameState.explosions.add(new Explosion(bomb.pos.x, bomb.pos.y));
 
@@ -283,7 +582,7 @@ public class BombermanController implements Initializable {
 
                 if (gameState.destructibleWalls.contains(explPos)) {
                     gameState.destructibleWalls.remove(explPos);
-                    gameState.score += 10;
+                    bomb.owner.score += 10;
                     break;
                 }
             }
@@ -297,162 +596,189 @@ public class BombermanController implements Initializable {
         });
     }
 
-    private void checkPlayerHit() {
+    private void checkPlayersHit() {
         for (Explosion explosion : gameState.explosions) {
-            if (explosion.pos.equals(gameState.player.pos)) {
-                gameState.player.lives--;
-                if (gameState.player.lives <= 0) {
-                    gameOver();
-                } else {
-                    respawnPlayer();
-                }
-                break;
+            // Vérifier tous les joueurs
+            if (explosion.pos.equals(gameState.player1.pos) && gameState.player1.lives > 0) {
+                gameState.player1.lives--;
+            }
+            if (explosion.pos.equals(gameState.player2.pos) && gameState.player2.lives > 0) {
+                gameState.player2.lives--;
+            }
+            if (explosion.pos.equals(gameState.player3.pos) && gameState.player3.lives > 0) {
+                gameState.player3.lives--;
+            }
+            if (explosion.pos.equals(gameState.player4.pos) && gameState.player4.lives > 0) {
+                gameState.player4.lives--;
             }
         }
     }
 
-    private void respawnPlayer() {
-        gameState.player.pos = new Position(1, 1);
-    }
+    private void checkWinCondition() {
+        // Compter les joueurs vivants et identifier le gagnant
+        List<Player> alivePlayers = new ArrayList<>();
+        List<String> alivePlayerNames = new ArrayList<>();
 
-    public int score = 0;
+        if (gameState.player1.lives > 0) {
+            alivePlayers.add(gameState.player1);
+            alivePlayerNames.add(player1Profile);
+        }
+        if (gameState.player2.lives > 0) {
+            alivePlayers.add(gameState.player2);
+            alivePlayerNames.add(player2Profile);
+        }
+        if (gameState.player3.lives > 0) {
+            alivePlayers.add(gameState.player3);
+            alivePlayerNames.add(player3Profile);
+        }
+        if (gameState.player4.lives > 0) {
+            alivePlayers.add(gameState.player4);
+            alivePlayerNames.add(player4Profile);
+        }
 
-    private List<PlayerScore> scoreList = new ArrayList<>();
-
-    private static class PlayerScore {
-        String name;
-        int score;
-
-        PlayerScore(String name, int score) {
-            this.name = name;
-            this.score = score;
+        // Condition de fin : plus qu'un joueur vivant ou aucun
+        if (alivePlayers.size() <= 1) {
+            if (alivePlayers.size() == 1) {
+                // Un seul gagnant
+                String winner = alivePlayerNames.get(0);
+                int winnerScore = alivePlayers.get(0).score;
+                updateGameStats(winner, winnerScore);
+                gameOver("Victoire de " + winner + " !");
+            } else {
+                // Aucun survivant (tous morts en même temps)
+                updateGameStatsAllDefeated();
+                gameOver("Tous les joueurs ont été éliminés !");
+            }
         }
     }
 
+    private void updateGameStats(String winner, int winnerScore) {
+        List<String> allPlayers = Arrays.asList(player1Profile, player2Profile, player3Profile, player4Profile);
 
-    private void gameOver() {
+        for (PlayerProfile profile : profileList) {
+            if (profile.name.equals(winner)) {
+                profile.addVictory(winnerScore);
+            } else if (allPlayers.contains(profile.name)) {
+                profile.addDefeat();
+            }
+        }
+        saveProfilesToFile();
+    }
+
+    private void updateGameStatsAllDefeated() {
+        List<String> allPlayers = Arrays.asList(player1Profile, player2Profile, player3Profile, player4Profile);
+
+        for (PlayerProfile profile : profileList) {
+            if (allPlayers.contains(profile.name)) {
+                profile.addDefeat();
+            }
+        }
+        saveProfilesToFile();
+    }
+
+    private void gameOver(String message) {
         if (gameLoop != null) {
             gameLoop.stop();
         }
+        gameStarted = false;
 
         Platform.runLater(() -> {
-            // Image de fond
-            Image backgroundImage = new Image(getClass().getResourceAsStream("/gameoverbomberman.jpg"));
-            BackgroundImage bgImage = new BackgroundImage(backgroundImage, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, new BackgroundSize(800, 600, false, false, false, false));
-            Background background = new Background(bgImage);
-
-            // Saisie du nom
-            Label promptLabel = new Label("Entrez votre nom :");
-            promptLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
-            TextField nameField = new TextField();
-            nameField.setMaxWidth(200);
-
-            Button submitButton = new Button("Valider le score");
-            submitButton.setOnAction(e -> {
-                String name = nameField.getText().trim();
-                if (!name.isEmpty()) {
-                    scoreList.add(new PlayerScore(name, gameState.player.score));
-                    saveScoresToFile(); // Sauvegarde ici
-                    showScoreboard();
-                }
-            });
-
-
-            VBox vbox = new VBox(15, promptLabel, nameField, submitButton);
+            VBox vbox = new VBox(20);
             vbox.setAlignment(Pos.CENTER);
-            vbox.setBackground(background);
             vbox.setPrefSize(800, 600);
+            vbox.setStyle("-fx-background-color: #2E7D32;");
+
+            Label gameOverLabel = new Label(message);
+            gameOverLabel.setStyle("-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;");
+
+            Button showStatsButton = new Button("Voir les statistiques");
+            showStatsButton.setOnAction(e -> showPlayerStats());
+
+            Button replayButton = new Button("Rejouer");
+            replayButton.setOnAction(e -> restartGame());
+
+            Button quitButton = new Button("Quitter");
+            quitButton.setOnAction(e -> Platform.exit());
+
+            vbox.getChildren().addAll(gameOverLabel, showStatsButton, replayButton, quitButton);
 
             Scene gameOverScene = new Scene(vbox);
             primaryStage.setScene(gameOverScene);
         });
     }
 
+    private void showPlayerStats() {
+        // Trier par ratio de victoires
+        profileList.sort((a, b) -> Double.compare(b.getWinRate(), a.getWinRate()));
 
-    private void loadScoresFromFile() {
-        try (Scanner scanner = new Scanner(new java.io.File("score.txt"))) {
+        VBox statsBox = new VBox(15);
+        statsBox.setAlignment(Pos.CENTER);
+        statsBox.setPrefSize(800, 600);
+        statsBox.setStyle("-fx-background-color: #2E7D32;");
+
+        Label title = new Label("CLASSEMENT DES JOUEURS");
+        title.setStyle("-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;");
+
+        VBox playersBox = new VBox(10);
+        playersBox.setAlignment(Pos.CENTER);
+
+        int rank = 1;
+        for (PlayerProfile profile : profileList) {
+            String statsText = String.format("%d. %s - %d V / %d D (%.1f%%)",
+                rank++, profile.name, profile.victories, profile.defeats, profile.getWinRate());
+            Label statsLabel = new Label(statsText);
+            statsLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+            playersBox.getChildren().add(statsLabel);
+        }
+
+        Button backButton = new Button("Retour");
+        backButton.setOnAction(e -> gameOver("Fin de partie"));
+
+        statsBox.getChildren().addAll(title, playersBox, backButton);
+
+        Scene statsScene = new Scene(statsBox);
+        primaryStage.setScene(statsScene);
+    }
+
+    private void loadProfilesFromFile() {
+        try (Scanner scanner = new Scanner(new File("donnees.txt"))) {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 String[] parts = line.split(":");
-                if (parts.length == 2) {
+                if (parts.length == 4) {
                     String name = parts[0].trim();
-                    int score = Integer.parseInt(parts[1].trim());
-                    scoreList.add(new PlayerScore(name, score));
+                    int victories = Integer.parseInt(parts[1].trim());
+                    int defeats = Integer.parseInt(parts[2].trim());
+                    int bestScore = Integer.parseInt(parts[3].trim());
+
+                    PlayerProfile profile = new PlayerProfile(name);
+                    profile.victories = victories;
+                    profile.defeats = defeats;
+                    profile.bestScore = bestScore;
+                    profileList.add(profile);
                 }
             }
         } catch (Exception e) {
-            System.out.println("Aucun fichier de score trouvé ou erreur de lecture.");
+            System.out.println("Aucun fichier de profils trouvé ou erreur de lecture.");
         }
     }
 
-    private void saveScoresToFile() {
-        try (PrintWriter writer = new PrintWriter("score.txt")) {
-            for (PlayerScore ps : scoreList) {
-                writer.println(ps.name + ":" + ps.score);
+    private void saveProfilesToFile() {
+        try (PrintWriter writer = new PrintWriter(new FileWriter("donnees.txt"))) {
+            for (PlayerProfile profile : profileList) {
+                writer.println(profile.name + ":" + profile.victories + ":" +
+                             profile.defeats + ":" + profile.bestScore);
             }
         } catch (Exception e) {
-            System.out.println("Erreur lors de l'écriture des scores.");
+            System.out.println("Erreur lors de l'écriture des profils.");
             e.printStackTrace();
         }
     }
 
-
-
-    private void showScoreboard() {
-
-        // Tri décroissant des scores
-        scoreList.sort((a, b) -> Integer.compare(b.score, a.score));
-
-        Label title = new Label("Classement des scores");
-        title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
-
-        VBox scoresBox = new VBox(10);
-        scoresBox.setAlignment(Pos.CENTER);
-        for (int i = 0; i < Math.min(5, scoreList.size()); i++) {
-            PlayerScore ps = scoreList.get(i);
-            Label label = new Label((i + 1) + ". " + ps.name + " - " + ps.score + " pts");
-            label.setStyle("-fx-font-size: 16px;");
-            scoresBox.getChildren().add(label);
-        }
-
-        Button replayButton = new Button("Rejouer");
-        replayButton.setOnAction(e -> restartGame());
-
-        Button quitButton = new Button("Quitter");
-        quitButton.setOnAction(e -> Platform.exit());
-
-        VBox root = new VBox(20, title, scoresBox, replayButton, quitButton);
-        root.setAlignment(Pos.CENTER);
-        root.setPrefSize(800, 600);
-
-        Scene scoreScene = new Scene(root);
-        primaryStage.setScene(scoreScene);
-    }
-
-
-
-    private void updateScoreBoard(VBox scoreBox) {
-        scoreBox.getChildren().removeIf(node -> node instanceof HBox);
-        int rank = 1;
-        for (PlayerScore ps : scoreList) {
-            Label label = new Label(rank++ + ". " + ps.name + " - " + ps.score);
-            label.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
-            scoreBox.getChildren().add(label);
-        }
-    }
-
-
-
-
-
-    private Scene originalGameScene;
-
-
-
     private void restartGame() {
         Platform.runLater(() -> {
             try {
-                primaryStage.close(); // ← le stage est connu et non null
+                primaryStage.close();
                 BombermanApplication newApp = new BombermanApplication();
                 Stage newStage = new Stage();
                 newApp.start(newStage);
@@ -462,17 +788,26 @@ public class BombermanController implements Initializable {
         });
     }
 
-
-
-
-
     private void updateUI() {
-        bombsLabel.setText("Bombes: " + gameState.player.bombsRemaining);
-        scoreLabel.setText("Score: " + gameState.score);
-        levelLabel.setText("Niveau: " + gameState.level);
+        if (gameState != null) {
+            if (bombsLabel != null) {
+                bombsLabel.setText("J1 Bombes: " + gameState.player1.bombsRemaining + " | J2 Bombes: " + gameState.player2.bombsRemaining);
+            }
+            if (scoreLabel != null) {
+                scoreLabel.setText("J1 Score: " + gameState.player1.score + " | J2 Score: " + gameState.player2.score);
+            }
+            if (levelLabel != null) {
+                levelLabel.setText("Vies J1: " + gameState.player1.lives + " | Vies J2: " + gameState.player2.lives);
+            }
+            if (profileLabel != null) {
+                profileLabel.setText("J1: " + player1Profile + " | J2: " + player2Profile);
+            }
+        }
     }
 
     private void render() {
+        if (gameState == null) return;
+
         // Fond
         gc.setFill(Color.web("#2E7D32"));
         gc.fillRect(0, 0, gameCanvas.getWidth(), gameCanvas.getHeight());
@@ -489,7 +824,6 @@ public class BombermanController implements Initializable {
         gc.setFill(Color.web("#424242"));
         for (Position wall : gameState.walls) {
             gc.fillRect(wall.x * CELL_SIZE, wall.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
-            // Effet 3D
             gc.setFill(Color.web("#616161"));
             gc.fillRect(wall.x * CELL_SIZE, wall.y * CELL_SIZE, CELL_SIZE, 3);
             gc.fillRect(wall.x * CELL_SIZE, wall.y * CELL_SIZE, 3, CELL_SIZE);
@@ -500,7 +834,6 @@ public class BombermanController implements Initializable {
         gc.setFill(Color.web("#8D6E63"));
         for (Position wall : gameState.destructibleWalls) {
             gc.fillRect(wall.x * CELL_SIZE, wall.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
-            // Texture brique
             gc.setFill(Color.web("#A1887F"));
             for (int i = 0; i < 3; i++) {
                 gc.fillRect(wall.x * CELL_SIZE + 5, wall.y * CELL_SIZE + i * 12 + 5, CELL_SIZE - 10, 8);
@@ -508,34 +841,57 @@ public class BombermanController implements Initializable {
             gc.setFill(Color.web("#8D6E63"));
         }
 
-        // Explosions avec effet de pulsation
+        // Explosions
         for (Explosion explosion : gameState.explosions) {
             double intensity = (double) explosion.timer / 30;
             Color explosionColor = Color.web("#FF5722").interpolate(Color.web("#FFEB3B"), 1 - intensity);
             gc.setFill(explosionColor);
-
             double size = CELL_SIZE * (0.5 + 0.5 * intensity);
             double offset = (CELL_SIZE - size) / 2;
             gc.fillOval(explosion.pos.x * CELL_SIZE + offset, explosion.pos.y * CELL_SIZE + offset, size, size);
         }
 
-        // Bombes avec animation de clignotement
+        // Bombes
         for (Bomb bomb : gameState.bombs) {
             boolean blink = bomb.timer < 60 && (bomb.timer / 10) % 2 == 0;
             gc.setFill(blink ? Color.web("#F44336") : Color.web("#212121"));
             gc.fillOval(bomb.pos.x * CELL_SIZE + 8, bomb.pos.y * CELL_SIZE + 8, CELL_SIZE - 16, CELL_SIZE - 16);
-
-            // Mèche
             gc.setFill(Color.web("#FF9800"));
             gc.fillRect(bomb.pos.x * CELL_SIZE + CELL_SIZE/2 - 1, bomb.pos.y * CELL_SIZE + 5, 2, 8);
         }
 
-        // Joueur avec dégradé
-        gc.setFill(Color.web("#2196F3"));
-        gc.fillOval(gameState.player.pos.x * CELL_SIZE + 5, gameState.player.pos.y * CELL_SIZE + 5, CELL_SIZE - 10, CELL_SIZE - 10);
-        // Highlight
-        gc.setFill(Color.web("#64B5F6"));
-        gc.fillOval(gameState.player.pos.x * CELL_SIZE + 8, gameState.player.pos.y * CELL_SIZE + 8, 8, 8);
+        // Joueur 1 (bleu)
+        if (gameState.player1.lives > 0) {
+            gc.setFill(Color.web("#2196F3"));
+            gc.fillOval(gameState.player1.pos.x * CELL_SIZE + 5, gameState.player1.pos.y * CELL_SIZE + 5, CELL_SIZE - 10, CELL_SIZE - 10);
+            gc.setFill(Color.web("#64B5F6"));
+            gc.fillOval(gameState.player1.pos.x * CELL_SIZE + 8, gameState.player1.pos.y * CELL_SIZE + 8, 8, 8);
+        }
+
+        // Joueur 2 (rouge)
+        if (gameState.player2.lives > 0) {
+            gc.setFill(Color.web("#F44336"));
+            gc.fillOval(gameState.player2.pos.x * CELL_SIZE + 5, gameState.player2.pos.y * CELL_SIZE + 5, CELL_SIZE - 10, CELL_SIZE - 10);
+            gc.setFill(Color.web("#EF5350"));
+            gc.fillOval(gameState.player2.pos.x * CELL_SIZE + 8, gameState.player2.pos.y * CELL_SIZE + 8, 8, 8);
+        }
+
+        // Joueur 3 (vert)
+        if (gameState.player3.lives > 0) {
+            gc.setFill(Color.web("#4CAF50"));
+            gc.fillOval(gameState.player3.pos.x * CELL_SIZE + 5, gameState.player3.pos.y * CELL_SIZE + 5, CELL_SIZE - 10, CELL_SIZE - 10);
+            gc.setFill(Color.web("#81C784"));
+            gc.fillOval(gameState.player3.pos.x * CELL_SIZE + 8, gameState.player3.pos.y * CELL_SIZE + 8, 8, 8);
+        }
+
+    // Joueur 4 (jaune)
+        if (gameState.player4.lives > 0) {
+            gc.setFill(Color.web("#FFEB3B"));
+            gc.fillOval(gameState.player4.pos.x * CELL_SIZE + 5, gameState.player4.pos.y * CELL_SIZE + 5, CELL_SIZE - 10, CELL_SIZE - 10);
+            gc.setFill(Color.web("#FFF176"));
+            gc.fillOval(gameState.player4.pos.x * CELL_SIZE + 8, gameState.player4.pos.y * CELL_SIZE + 8, 8, 8);
+        }
+
     }
 
     // Classes de données
@@ -554,18 +910,22 @@ public class BombermanController implements Initializable {
     }
 
     static class Player {
-        public int score;
         Position pos;
         int bombsRemaining = 3;
         int bombRange = 2;
         int lives = 3;
+        int score = 0;
         Player(int x, int y) { this.pos = new Position(x, y); }
     }
 
     static class Bomb {
         Position pos;
         int timer = 120;
-        Bomb(int x, int y) { this.pos = new Position(x, y); }
+        Player owner;
+        Bomb(int x, int y, Player owner) {
+            this.pos = new Position(x, y);
+            this.owner = owner;
+        }
     }
 
     static class Explosion {
@@ -575,16 +935,23 @@ public class BombermanController implements Initializable {
     }
 
     static class GameState {
-        Player player;
+        Player player1;
+        Player player2;
+        Player player3;
+        Player player4;
+
         List<Bomb> bombs = new ArrayList<>();
         List<Explosion> explosions = new ArrayList<>();
         Set<Position> walls = new HashSet<>();
         Set<Position> destructibleWalls = new HashSet<>();
-        int score = 0;
         int level = 1;
 
         GameState() {
-            player = new Player(1, 1);
+            player1 = new Player(1, 1);  // Joueur 1 en haut à gauche
+            player2 = new Player(GRID_SIZE - 2, GRID_SIZE - 2);  // Joueur 2 en bas à droite
+            player3 = new Player(1, GRID_SIZE - 2);
+            player4 = new Player(GRID_SIZE - 2, 1);
+
             initializeMap();
         }
 
@@ -603,7 +970,7 @@ public class BombermanController implements Initializable {
             for (int i = 1; i < GRID_SIZE - 1; i++) {
                 for (int j = 1; j < GRID_SIZE - 1; j++) {
                     if (!walls.contains(new Position(i, j)) &&
-                            !(i <= 2 && j <= 2) &&
+                            !((i <= 2 && j <= 2) || (i >= GRID_SIZE - 3 && j >= GRID_SIZE - 3)) &&
                             random.nextDouble() < 0.3) {
                         destructibleWalls.add(new Position(i, j));
                     }
