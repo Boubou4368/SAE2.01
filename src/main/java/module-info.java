@@ -1,4 +1,4 @@
-module maquette.sae2_01 {
+module org.example.sae2_01 {
     requires javafx.controls;
     requires javafx.fxml;
     requires javafx.web;
@@ -12,6 +12,7 @@ module maquette.sae2_01 {
     requires com.almasb.fxgl.all;
     requires javafx.graphics;
     requires java.desktop;
+    requires javafx.media;
 
     opens maquette.sae2_01 to javafx.fxml;
     exports maquette.sae2_01;
