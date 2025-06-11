@@ -18,8 +18,8 @@ public class SoloModeController {
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(gameScene);
             stage.setTitle("Bomberman");
-            stage.setWidth(600);
-            stage.setHeight(800);
+            stage.setWidth(1000);
+            stage.setHeight(1000);
             stage.show();
 
             // Donne le focus au canvas pour les touches clavier
@@ -34,18 +34,18 @@ public class SoloModeController {
     @FXML
     private void onCTF(ActionEvent event) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("bomberman.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("bomberman2.fxml"));
             Scene gameScene = new Scene(loader.load());
 
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(gameScene);
             stage.setTitle("Bomberman");
-            stage.setWidth(600);
-            stage.setHeight(800);
+            stage.setWidth(1000);
+            stage.setHeight(1000);
             stage.show();
 
             // Donne le focus au canvas pour les touches clavier
-            BombermanController controller = loader.getController();
+            BombermanController2 controller = loader.getController();
             controller.requestFocus();
 
         } catch (Exception e) {

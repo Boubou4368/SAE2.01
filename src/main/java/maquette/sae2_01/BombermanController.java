@@ -15,7 +15,12 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class BombermanController implements Initializable {
@@ -103,6 +108,7 @@ public class BombermanController implements Initializable {
     private Image P4H, P4B, P4G, P4D;
     private Image currentP4Image = null;
 
+    public Map<Integer, KeyMapping> keyMappings = chargerTouches("src/main/resources/maquette/sae2_01/Touches.yaml");
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -258,31 +264,57 @@ public class BombermanController implements Initializable {
 
         Direction newDirection = Direction.IDLE;
         KeyCode currentDirectionKey = null;
+        KeyMapping mapping = keyMappings.get(playerIndex);
 
-        // Contrôles spécifiques à chaque joueur
+        if (mapping != null) {
+            if (mapping.up != null && pressedKeys.contains(mapping.up)) {
+                newPos.setY(player.getPos().getY() - 1);
+                moved = true;
+                newDirection = Direction.UP;
+            } else if (mapping.down != null && pressedKeys.contains(mapping.down)) {
+                newPos.setY(player.getPos().getY() + 1);
+                moved = true;
+                newDirection = Direction.DOWN;
+            } else if (mapping.left != null && pressedKeys.contains(mapping.left)) {
+                newPos.setX(player.getPos().getX() - 1);
+                moved = true;
+                newDirection = Direction.LEFT;
+            } else if (mapping.right != null && pressedKeys.contains(mapping.right)) {
+                newPos.setX(player.getPos().getX() + 1);
+                moved = true;
+                newDirection = Direction.RIGHT;
+            }
+        }
+
+
+        /*// Contrôles spécifiques à chaque joueur
         switch (playerIndex) {
             case 0: // Joueur 1 : ZQSD
-                if (pressedKeys.contains(KeyCode.Z)) {
-                    newPos.setY(player.getPos().getY() - 1);
-                    moved = true;
-                    newDirection = Direction.UP;
-                } else if (pressedKeys.contains(KeyCode.S)) {
-                    newPos.setY(player.getPos().getY() + 1);
-                    moved = true;
-                    newDirection = Direction.DOWN;
-                } else if (pressedKeys.contains(KeyCode.Q)) {
-                    newPos.setX(player.getPos().getX() - 1);
-                    moved = true;
-                    newDirection = Direction.LEFT;
-                } else if (pressedKeys.contains(KeyCode.D)) {
-                    newPos.setX(player.getPos().getX() + 1);
-                    moved = true;
-                    newDirection = Direction.RIGHT;
+                KeyMapping mapping = keyMappings.get(playerIndex);
+
+                if (mapping != null) {
+                    if (mapping.up != null && pressedKeys.contains(mapping.up)) {
+                        newPos.setY(player.getPos().getY() - 1);
+                        moved = true;
+                        newDirection = Direction.UP;
+                    } else if (mapping.down != null && pressedKeys.contains(mapping.down)) {
+                        newPos.setY(player.getPos().getY() + 1);
+                        moved = true;
+                        newDirection = Direction.DOWN;
+                    } else if (mapping.left != null && pressedKeys.contains(mapping.left)) {
+                        newPos.setX(player.getPos().getX() - 1);
+                        moved = true;
+                        newDirection = Direction.LEFT;
+                    } else if (mapping.right != null && pressedKeys.contains(mapping.right)) {
+                        newPos.setX(player.getPos().getX() + 1);
+                        moved = true;
+                        newDirection = Direction.RIGHT;
+                    }
                 }
-                break;
+
 
             case 1: // Joueur 2 : Flèches
-                if (pressedKeys.contains(KeyCode.UP)) {
+                if (pressedKeys.contains(KeyCode.I)) {
                     newPos.setY(player.getPos().getY() - 1);
                     moved = true;
                     newDirection = Direction.UP;
@@ -340,7 +372,7 @@ public class BombermanController implements Initializable {
                     newDirection = Direction.RIGHT;
                 }
                 break;
-        }
+        }*/
 
         if (moved && canMoveTo(newPos)) {
             player.setPos(newPos);
@@ -364,11 +396,11 @@ public class BombermanController implements Initializable {
     }
 
     private void checkBombPlacement(Player player, int playerIndex) {
-        KeyCode bombKey = null;
-
+        KeyCode bombKey = keyMappings.get(playerIndex).bomb;
+/*
         switch (playerIndex) {
             case 0:
-                bombKey = KeyCode.E;
+                bombKey = keyMappings.get(playerIndex).bomb;
                 break;
             case 1:
                 bombKey = KeyCode.ENTER;
@@ -379,7 +411,7 @@ public class BombermanController implements Initializable {
             case 3:
                 bombKey = KeyCode.Y;
                 break;
-        }
+        }*/
 
         if (pressedKeys.contains(bombKey) && player.getBombsRemaining() > 0) {
             placeBomb(player, playerIndex + 1);
@@ -1044,4 +1076,63 @@ public class BombermanController implements Initializable {
         }
 
     }
+
+    private Map<Integer, KeyMapping> chargerTouches(String cheminFichier) {
+        Map<Integer, KeyMapping> keyMappings = new HashMap<>();
+        int joueurActuel = -1;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(cheminFichier))) {
+            String ligne;
+            while ((ligne = reader.readLine()) != null) {
+                ligne = ligne.trim();
+                if (ligne.isEmpty()) continue;
+
+                if (ligne.startsWith("J")) {
+                    try {
+                        joueurActuel = Integer.parseInt(ligne.substring(1, 2)) - 1;
+                        keyMappings.put(joueurActuel, new KeyMapping());
+                    } catch (NumberFormatException e) {
+                        System.err.println("Ligne joueur invalide : " + ligne);
+                    }
+                } else if (joueurActuel != -1 && ligne.contains(":")) {
+                    String[] parts = ligne.split(":", 2);
+                    if (parts.length < 2) continue;
+
+                    String direction = parts[0].trim();
+                    String toucheTexte = parts[1].trim();
+
+                    if (toucheTexte.isEmpty()) continue;
+
+                    String toucheKeyCode;
+                    if (toucheTexte.equalsIgnoreCase("Caps Lock")) {
+                        toucheKeyCode = "CAPS"; // Correction spécifique
+                    } else {
+                        toucheKeyCode = toucheTexte.toUpperCase().replace(" ", "_");
+                    }
+
+
+                    try {
+                        KeyCode key = KeyCode.valueOf(toucheKeyCode);
+                        KeyMapping mapping = keyMappings.get(joueurActuel);
+                        switch (direction) {
+                            case "U" -> mapping.up = key;
+                            case "D" -> mapping.down = key;
+                            case "L" -> mapping.left = key;
+                            case "R" -> mapping.right = key;
+                            case "B" -> mapping.bomb = key;
+                        }
+                    } catch (IllegalArgumentException e) {
+                        System.err.println("Touche invalide ignorée : '" + toucheTexte + "'");
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Erreur lors de la lecture du fichier de touches : " + e.getMessage());
+        }
+
+        return keyMappings;
+    }
+
+
+
 }
