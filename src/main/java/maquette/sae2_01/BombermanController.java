@@ -988,14 +988,6 @@ public class BombermanController implements Initializable {
         }
 
 
-        // Couleurs des joueurs
-        Color[] playerColors = {
-                Color.web("#2196F3"), // Bleu (Joueur 1)
-                Color.web("#F44336"), // Rouge (Joueur 2)
-                Color.web("#4CAF50"), // Vert (Joueur 3)
-                Color.web("#FF9800")  // Orange (Joueur 4)
-        };
-
         Color[] highlightColors = {
                 Color.web("#64B5F6"), // Bleu clair
                 Color.web("#EF5350"), // Rouge clair
@@ -1007,17 +999,30 @@ public class BombermanController implements Initializable {
         for (int i = 0; i < 4; i++) {
             Player player = gameState.players[i];
             if (player.getisAlive()) {
-                // Corps du joueur
-                gc.setFill(playerColors[i]);
-                gc.fillOval(player.getPos().getX() * CELL_SIZE + 5, player.getPos().getY() * CELL_SIZE + 5, CELL_SIZE - 10, CELL_SIZE - 10);
+                Image playerImage = getPlayerImage(i);
 
-                // Highlight
-                gc.setFill(highlightColors[i]);
-                gc.fillOval(player.getPos().getX() * CELL_SIZE + 8, player.getPos().getY() * CELL_SIZE + 8, 8, 8);
+                if (playerImage != null) {
+                    // Afficher l'image GIF du joueur
+                    gc.drawImage(playerImage,
+                            player.getPos().getX() * CELL_SIZE,
+                            player.getPos().getY() * CELL_SIZE,
+                            CELL_SIZE,
+                            CELL_SIZE);
 
-                // Numéro du joueur
-                gc.setFill(Color.WHITE);
-                gc.fillText(String.valueOf(i + 1), player.getPos().getX() * CELL_SIZE + CELL_SIZE/2 - 3, player.getPos().getY() * CELL_SIZE + CELL_SIZE/2 + 3);
+                    // Effet de clignotement si le joueur est invulnérable
+                    if (player.getIsInvulnerable()) {
+                        long currentTime = System.currentTimeMillis();
+                        if ((currentTime / 200) % 2 == 0) { // Clignotement toutes les 200ms
+                            gc.setGlobalAlpha(0.5);
+                            gc.drawImage(playerImage,
+                                    player.getPos().getX() * CELL_SIZE,
+                                    player.getPos().getY() * CELL_SIZE,
+                                    CELL_SIZE,
+                                    CELL_SIZE);
+                            gc.setGlobalAlpha(1.0);
+                        }
+                    }
+                }
             }
         }
 
