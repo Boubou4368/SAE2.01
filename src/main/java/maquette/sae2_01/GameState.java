@@ -26,10 +26,21 @@ public class GameState {
     }
 
     // Méthodes d'accès pour compatibilité
-    public Player getPlayer1() { return players[0]; }
-    public Player getPlayer2() { return players[1]; }
-    public Player getPlayer3() { return players[2]; }
-    public Player getPlayer4() { return players[3]; }
+    public Player getPlayer1() {
+        return players[0];
+    }
+
+    public Player getPlayer2() {
+        return players[1];
+    }
+
+    public Player getPlayer3() {
+        return players[2];
+    }
+
+    public Player getPlayer4() {
+        return players[3];
+    }
 
     private void initializeMap() {
         // Créer les murs fixes (bordures et colonnes/lignes paires)
@@ -66,18 +77,19 @@ public class GameState {
         placeItems(availablePositions, random);
 
     }
+
     private boolean isStartingArea(Position pos) {
         // Zone de départ joueur 1 (coin haut-gauche) - 3x3
-        if (pos.x <= 2 && pos.y <= 2) return true;
+        if (pos.getX() <= 2 && pos.getY() <= 2) return true;
 
         // Zone de départ joueur 2 (coin bas-droite) - 3x3
-        if (pos.x >= GRID_SIZE - 3 && pos.y >= GRID_SIZE - 3) return true;
+        if (pos.getX() >= GRID_SIZE - 3 && pos.getY() >= GRID_SIZE - 3) return true;
 
         // Zone de départ joueur 3 (coin bas-gauche) - 3x3
-        if (pos.x <= 2 && pos.y >= GRID_SIZE - 3) return true;
+        if (pos.getX() <= 2 && pos.getY() >= GRID_SIZE - 3) return true;
 
         // Zone de départ joueur 4 (coin haut-droite) - 3x3
-        if (pos.x >= GRID_SIZE - 3 && pos.y <= 2) return true;
+        if (pos.getX() >= GRID_SIZE - 3 && pos.getY() <= 2) return true;
 
         return false;
     }
@@ -97,27 +109,27 @@ public class GameState {
 
         // Placer 4 objets feu
         for (int i = 0; i < 4 && index < availablePositions.size(); i++, index++) {
-            hiddenItems.put(availablePositions.get(index), new Item(BombermanController.ItemType.FEU));
+            hiddenItems.put(availablePositions.get(index), new Item(ItemType.FEU));
         }
 
         // Placer 4 objets vitesse
         for (int i = 0; i < 4 && index < availablePositions.size(); i++, index++) {
-            hiddenItems.put(availablePositions.get(index), new Item(BombermanController.ItemType.VITESSE));
+            hiddenItems.put(availablePositions.get(index), new Item(ItemType.VITESSE));
         }
 
         // Placer 8 objets bombe
         for (int i = 0; i < 8 && index < availablePositions.size(); i++, index++) {
-            hiddenItems.put(availablePositions.get(index), new Item(BombermanController.ItemType.BOMBE));
+            hiddenItems.put(availablePositions.get(index), new Item(ItemType.BOMBE));
         }
 
         // Placer 2 objets kick - NOUVEAU
         for (int i = 0; i < 2 && index < availablePositions.size(); i++, index++) {
-            hiddenItems.put(availablePositions.get(index), new Item(BombermanController.ItemType.KICK));
+            hiddenItems.put(availablePositions.get(index), new Item(ItemType.KICK));
         }
 
         // Placer 1 skull
         if (index < availablePositions.size()) {
-            hiddenItems.put(availablePositions.get(index), new Item(BombermanController.ItemType.SKULL));
+            hiddenItems.put(availablePositions.get(index), new Item(ItemType.SKULL));
         }
     }
 
@@ -128,17 +140,17 @@ public class GameState {
 
         // Placer des objets proportionnellement au nombre de positions disponibles
         for (int i = 0; i < itemsPerType && index < availablePositions.size(); i++, index++) {
-            hiddenItems.put(availablePositions.get(index), new Item(BombermanController.ItemType.FEU));
+            hiddenItems.put(availablePositions.get(index), new Item(ItemType.FEU));
         }
         for (int i = 0; i < itemsPerType && index < availablePositions.size(); i++, index++) {
-            hiddenItems.put(availablePositions.get(index), new Item(BombermanController.ItemType.VITESSE));
+            hiddenItems.put(availablePositions.get(index), new Item(ItemType.VITESSE));
         }
         for (int i = 0; i < itemsPerType && index < availablePositions.size(); i++, index++) {
-            hiddenItems.put(availablePositions.get(index), new Item(BombermanController.ItemType.BOMBE));
+            hiddenItems.put(availablePositions.get(index), new Item(ItemType.BOMBE));
         }
         // Placer un skull si il reste de la place
         if (index < availablePositions.size()) {
-            hiddenItems.put(availablePositions.get(index), new Item(BombermanController.ItemType.SKULL));
+            hiddenItems.put(availablePositions.get(index), new Item(ItemType.SKULL));
         }
     }
 
@@ -147,7 +159,7 @@ public class GameState {
         int lastAliveIndex = -1;
 
         for (int i = 0; i < 4; i++) {
-            if (players[i].isAlive) {
+            if (players[i].getisAlive()) {
                 alivePlayers++;
                 lastAliveIndex = i;
             }
@@ -172,13 +184,14 @@ public class GameState {
         System.out.println("Objets visibles: " + visibleItems.size());
 
         // Compter les types d'objets
-        Map<BombermanController.ItemType, Integer> itemCount = new HashMap<>();
+        Map<ItemType, Integer> itemCount = new HashMap<>();
         for (Item item : hiddenItems.values()) {
-            itemCount.put(item.type, itemCount.getOrDefault(item.type, 0) + 1);
+            itemCount.put(item.getType(), itemCount.getOrDefault(item.getType(), 0) + 1);
         }
         System.out.println("Répartition des objets:");
-        for (Map.Entry<BombermanController.ItemType, Integer> entry : itemCount.entrySet()) {
+        for (Map.Entry<ItemType, Integer> entry : itemCount.entrySet()) {
             System.out.println("  " + entry.getKey() + ": " + entry.getValue());
         }
         System.out.println("================");
     }
+}

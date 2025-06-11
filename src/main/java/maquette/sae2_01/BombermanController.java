@@ -109,10 +109,10 @@ public class BombermanController implements Initializable {
         gc = gameCanvas.getGraphicsContext2D();
         gameState = new GameState();
 
-        loadImages();
         gameCanvas.setFocusTraversable(true);
         soundManager = SoundManager.getInstance();
         soundManager.startBackgroundMusic();
+        loadImages();
 
         startGameLoop();
         startGameTimer();
@@ -242,7 +242,7 @@ public class BombermanController implements Initializable {
     }
 
     private void handlePlayerInput(long currentTime, Player player, int playerIndex) {
-        if (!player.isAlive) return;
+        if (!player.getisAlive()) return;
 
         long lastMoveTime = lastMoveTimes[playerIndex];
 
@@ -253,7 +253,7 @@ public class BombermanController implements Initializable {
             return;
         }
 
-        Position newPos = new Position(player.pos.x, player.pos.y);
+        Position newPos = new Position(player.getPos().getX(), player.getPos().getY());
         boolean moved = false;
 
         Direction newDirection = Direction.IDLE;
@@ -263,19 +263,19 @@ public class BombermanController implements Initializable {
         switch (playerIndex) {
             case 0: // Joueur 1 : ZQSD
                 if (pressedKeys.contains(KeyCode.Z)) {
-                    newPos.y--;
+                    newPos.setY(player.getPos().getY() - 1);
                     moved = true;
                     newDirection = Direction.UP;
                 } else if (pressedKeys.contains(KeyCode.S)) {
-                    newPos.y++;
+                    newPos.setY(player.getPos().getY() + 1);
                     moved = true;
                     newDirection = Direction.DOWN;
                 } else if (pressedKeys.contains(KeyCode.Q)) {
-                    newPos.x--;
+                    newPos.setX(player.getPos().getX() - 1);
                     moved = true;
                     newDirection = Direction.LEFT;
                 } else if (pressedKeys.contains(KeyCode.D)) {
-                    newPos.x++;
+                    newPos.setX(player.getPos().getX() + 1);
                     moved = true;
                     newDirection = Direction.RIGHT;
                 }
@@ -283,19 +283,19 @@ public class BombermanController implements Initializable {
 
             case 1: // Joueur 2 : Flèches
                 if (pressedKeys.contains(KeyCode.UP)) {
-                    newPos.y--;
+                    newPos.setY(player.getPos().getY() - 1);
                     moved = true;
                     newDirection = Direction.UP;
                 } else if (pressedKeys.contains(KeyCode.DOWN)) {
-                    newPos.y++;
+                    newPos.setY(player.getPos().getY() + 1);
                     moved = true;
                     newDirection = Direction.DOWN;
                 } else if (pressedKeys.contains(KeyCode.LEFT)) {
-                    newPos.x--;
+                    newPos.setX(player.getPos().getX() - 1);
                     moved = true;
                     newDirection = Direction.LEFT;
                 } else if (pressedKeys.contains(KeyCode.RIGHT)) {
-                    newPos.x++;
+                    newPos.setX(player.getPos().getX() + 1);
                     moved = true;
                     newDirection = Direction.RIGHT;
                 }
@@ -303,19 +303,19 @@ public class BombermanController implements Initializable {
 
             case 2: // Joueur 3 : OKLM
                 if (pressedKeys.contains(KeyCode.O)) {
-                    newPos.y--;
+                    newPos.setY(player.getPos().getY() - 1);
                     moved = true;
                     newDirection = Direction.UP;
                 } else if (pressedKeys.contains(KeyCode.L)) {
-                    newPos.y++;
+                    newPos.setY(player.getPos().getY() + 1);
                     moved = true;
                     newDirection = Direction.DOWN;
                 } else if (pressedKeys.contains(KeyCode.K)) {
-                    newPos.x--;
+                    newPos.setX(player.getPos().getX() - 1);
                     moved = true;
                     newDirection = Direction.LEFT;
                 } else if (pressedKeys.contains(KeyCode.M)) {
-                    newPos.x++;
+                    newPos.setX(player.getPos().getX() + 1);
                     moved = true;
                     newDirection = Direction.RIGHT;
                 }
@@ -323,19 +323,19 @@ public class BombermanController implements Initializable {
 
             case 3: // Joueur 4 : TFGH
                 if (pressedKeys.contains(KeyCode.T)) {
-                    newPos.y--;
+                    newPos.setY(player.getPos().getY() - 1);
                     moved = true;
                     newDirection = Direction.UP;
                 } else if (pressedKeys.contains(KeyCode.G)) {
-                    newPos.y++;
+                    newPos.setY(player.getPos().getY() + 1);
                     moved = true;
                     newDirection = Direction.DOWN;
                 } else if (pressedKeys.contains(KeyCode.F)) {
-                    newPos.x--;
+                    newPos.setX(player.getPos().getX() - 1);
                     moved = true;
                     newDirection = Direction.LEFT;
                 } else if (pressedKeys.contains(KeyCode.H)) {
-                    newPos.x++;
+                    newPos.setX(player.getPos().getX() + 1);
                     moved = true;
                     newDirection = Direction.RIGHT;
                 }
@@ -343,16 +343,16 @@ public class BombermanController implements Initializable {
         }
 
         if (moved && canMoveTo(newPos)) {
-            player.pos = newPos;
+            player.setPos(newPos);
             updatePlayerImage(playerIndex, newDirection);
 
             lastMoveTimes[playerIndex] = currentTime;
             soundManager.playSound("walk");
 
             // Vérifier le kick de bombe après le mouvement réussi
-            if (player.canKick && currentDirectionKey != null) {
+            if (player.getcanKick() && currentDirectionKey != null) {
                 tryKickBomb(player, currentDirectionKey);
-            } else if (moved && player.canKick && currentDirectionKey != null) {
+            } else if (moved && player.getcanKick() && currentDirectionKey != null) {
                 // Si le mouvement est bloqué mais que le joueur peut kicker,
                 // essayer de kicker une bombe dans cette direction
                 tryKickBomb(player, currentDirectionKey);
@@ -381,14 +381,14 @@ public class BombermanController implements Initializable {
                 break;
         }
 
-        if (pressedKeys.contains(bombKey) && player.bombsRemaining > 0) {
+        if (pressedKeys.contains(bombKey) && player.getBombsRemaining() > 0) {
             placeBomb(player, playerIndex + 1);
             pressedKeys.remove(bombKey);
         }
     }
 
     private boolean canMoveTo(Position pos) {
-        if (pos.x < 0 || pos.x >= GRID_SIZE || pos.y < 0 || pos.y >= GRID_SIZE) {
+        if (pos.getX() < 0 || pos.getX() >= GRID_SIZE || pos.getY() < 0 || pos.getY() >= GRID_SIZE) {
             return false;
         }
 
@@ -397,14 +397,14 @@ public class BombermanController implements Initializable {
         }
 
         for (Bomb bomb : gameState.bombs) {
-            if (bomb.pos.equals(pos)) {
+            if (bomb.getPos().equals(pos)) {
                 return false;
             }
         }
 
         // Vérifier que les joueurs ne se chevauchent pas
         for (Player player : gameState.players) {
-            if (player.isAlive && pos.equals(player.pos)) {
+            if (player.getisAlive() && pos.equals(player.getPos())) {
                 return false;
             }
         }
@@ -491,17 +491,17 @@ public class BombermanController implements Initializable {
     }
 
     private void placeBomb(Player player, int playerNumber) {
-        Position bombPos = new Position(player.pos.x, player.pos.y);
+        Position bombPos = new Position(player.getPos().getX(), player.getPos().getY());
 
         for (Bomb bomb : gameState.bombs) {
-            if (bomb.pos.equals(bombPos)) {
+            if (bomb.getPos().equals(bombPos)) {
                 return;
             }
         }
 
 
-        gameState.bombs.add(new Bomb(bombPos.x, bombPos.y, playerNumber));
-        player.bombsRemaining--;
+        gameState.bombs.add(new Bomb(bombPos.getX(), bombPos.getY(), playerNumber));
+        player.setBombsRemaining(player.getBombsRemaining() - 1);
         soundManager.playSound("bomb_place"); // Jouer le son de placement de bombe
     }
 
@@ -515,16 +515,16 @@ public class BombermanController implements Initializable {
                 KickingBomb kickingBomb = (KickingBomb) bomb;
                 if (kickingBomb.shouldMove()) {
                     Position newPos = new Position(
-                            kickingBomb.pos.x + kickingBomb.direction.x,
-                            kickingBomb.pos.y + kickingBomb.direction.y
+                            kickingBomb.getPos().getX() + kickingBomb.getDirection().getX(),
+                            kickingBomb.getPos().getY() + kickingBomb.getDirection().getY()
                     );
 
                     if (canMoveBombTo(newPos) && !isPlayerAt(newPos)) {
-                        kickingBomb.pos = newPos;
+                        kickingBomb.setPos(newPos);
                     } else {
                         // La bombe s'arrête, on la convertit en bombe normale
-                        Bomb stoppedBomb = new Bomb(kickingBomb.pos.x, kickingBomb.pos.y, kickingBomb.owner);
-                        stoppedBomb.timer = kickingBomb.timer;
+                        Bomb stoppedBomb = new Bomb(kickingBomb.getPos().getX(), kickingBomb.getPos().getY(), kickingBomb.getOwner());
+                        stoppedBomb.setTimer(kickingBomb.getTimer());
 
                         bombIterator.remove();
                         gameState.bombs.add(stoppedBomb);
@@ -537,8 +537,8 @@ public class BombermanController implements Initializable {
                 explodeBomb(bomb);
                 bombIterator.remove();
 
-                if (bomb.owner >= 1 && bomb.owner <= 4) {
-                    gameState.players[bomb.owner - 1].bombsRemaining++;
+                if (bomb.getOwner() >= 1 && bomb.getOwner() <= 4) {
+                    gameState.players[bomb.getOwner() - 1].setBombsRemaining(gameState.players[bomb.getOwner() - 1].getBombsRemaining()+1);
                 }
             }
         }
@@ -546,16 +546,16 @@ public class BombermanController implements Initializable {
 
 
     private void explodeBomb(Bomb bomb) {
-        int range = gameState.players[bomb.owner - 1].bombRange;
+        int range = gameState.players[bomb.getOwner() - 1].getBombRange();
 
-        gameState.explosions.add(new Explosion(bomb.pos.x, bomb.pos.y));
+        gameState.explosions.add(new Explosion(bomb.getPos().getX(), bomb.getPos().getY()));
 
         int[][] directions = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
 
         for (int[] dir : directions) {
             for (int i = 1; i <= range; i++) {
-                int newX = bomb.pos.x + dir[0] * i;
-                int newY = bomb.pos.y + dir[1] * i;
+                int newX = bomb.getPos().getX() + dir[0] * i;
+                int newY = bomb.getPos().getY() + dir[1] * i;
                 Position explPos = new Position(newX, newY);
 
                 if (newX < 0 || newX >= GRID_SIZE || newY < 0 || newY >= GRID_SIZE) {
@@ -587,16 +587,16 @@ public class BombermanController implements Initializable {
     }
 
     private void tryKickBomb(Player player, KeyCode direction) {
-        if (!player.canKick || direction == null) return;
+        if (!player.getcanKick() || direction == null) return;
 
         Position kickDirection = getDirectionFromKey(direction);
         if (kickDirection == null) return;
 
-        Position bombPos = new Position(player.pos.x + kickDirection.x, player.pos.y + kickDirection.y);
+        Position bombPos = new Position(player.getPos().getX() + kickDirection.getX(), player.getPos().getY() + kickDirection.getY());
 
         Bomb bombToKick = null;
         for (Bomb bomb : gameState.bombs) {
-            if (bomb.pos.equals(bombPos)) {
+            if (bomb.getPos().equals(bombPos)) {
                 if (!(bomb instanceof KickingBomb)) {
                     bombToKick = bomb;
                 }
@@ -633,14 +633,14 @@ public class BombermanController implements Initializable {
         gameState.bombs.remove(bomb);
 
         // Créer une nouvelle bombe qui bouge
-        KickingBomb kickingBomb = new KickingBomb(bomb.pos.x, bomb.pos.y, bomb.owner, direction);
-        kickingBomb.timer = bomb.timer; // Conserver le timer existant
+        KickingBomb kickingBomb = new KickingBomb(bomb.getPos().getX(), bomb.getPos().getY(), bomb.getOwner(), direction);
+        kickingBomb.setKickTimer(bomb.getTimer());
 
         gameState.bombs.add(kickingBomb);
     }
 
     private boolean canMoveBombTo(Position pos) {
-        if (pos.x < 0 || pos.x >= GRID_SIZE || pos.y < 0 || pos.y >= GRID_SIZE) {
+        if (pos.getX() < 0 || pos.getX() >= GRID_SIZE || pos.getY() < 0 || pos.getY() >= GRID_SIZE) {
             return false;
         }
 
@@ -650,7 +650,7 @@ public class BombermanController implements Initializable {
 
         // Vérifier qu'il n'y a pas déjà une bombe à cette position
         for (Bomb bomb : gameState.bombs) {
-            if (bomb.pos.equals(pos)) {
+            if (bomb.getPos().equals(pos)) {
                 return false;
             }
         }
@@ -669,26 +669,26 @@ public class BombermanController implements Initializable {
         long currentTime = System.currentTimeMillis();
 
         // Vérifier si l'invincibilité est terminée
-        if (gameState.players[0].isInvulnerable && currentTime >= gameState.players[0].invulnerabilityEndTime) {
-            gameState.players[0].isInvulnerable = false;
+        if (gameState.players[0].getIsInvulnerable() && currentTime >= gameState.players[0].getInvulnerabilityEndTime()) {
+            gameState.players[0].setIsInvulnerable(false);
         }
-        if (gameState.players[1].isInvulnerable && currentTime >= gameState.players[1].invulnerabilityEndTime) {
-            gameState.players[1].isInvulnerable = false;
+        if (gameState.players[1].getIsInvulnerable() && currentTime >= gameState.players[1].getInvulnerabilityEndTime()) {
+            gameState.players[1].setIsInvulnerable(false);
         }
-        if (gameState.players[2].isInvulnerable && currentTime >= gameState.players[2].invulnerabilityEndTime) {
-            gameState.players[2].isInvulnerable = false;
+        if (gameState.players[2].getIsInvulnerable() && currentTime >= gameState.players[2].getInvulnerabilityEndTime()) {
+            gameState.players[2].setIsInvulnerable(false);
         }
-        if (gameState.players[3].isInvulnerable && currentTime >= gameState.players[3].invulnerabilityEndTime) {
-            gameState.players[3].isInvulnerable = false;
+        if (gameState.players[3].getIsInvulnerable() && currentTime >= gameState.players[3].getInvulnerabilityEndTime()) {
+            gameState.players[3].setIsInvulnerable(false);
         }
 
         for (Explosion explosion : gameState.explosions) {
             for (int i = 0; i < 4; i++) {
                 Player player = gameState.players[i];
-                if (player.isAlive && explosion.pos.equals(player.pos) && !gameState.players[i].isInvulnerable) {
-                    player.lives--;
-                    if (player.lives <= 0) {
-                        player.isAlive = false;
+                if (player.getisAlive() && explosion.pos.equals(player.getPos()) && !gameState.players[i].getIsInvulnerable()) {
+                    player.setLives(player.getLives() - 1);
+                    if (player.getLives() <= 0) {
+                        player.setIsInvulnerable(false);
                         checkGameOver();
                     } else {
                         respawnPlayer(player, i);
@@ -705,9 +705,9 @@ public class BombermanController implements Initializable {
                 new Position(1, GRID_SIZE - 2),                 // Joueur 3
                 new Position(GRID_SIZE - 2, 1)                  // Joueur 4
         };
-        player.pos = spawnPositions[playerIndex];
-        player.isInvulnerable = true;
-        player.invulnerabilityEndTime = System.currentTimeMillis() + 3000; // 3 secondes
+        player.setPos(spawnPositions[playerIndex]);
+        player.setIsInvulnerable(true);
+        player.setInvulnerabilityEndTime(System.currentTimeMillis() + 3000);
     }
 
     private void checkItemPickup() {
@@ -718,35 +718,32 @@ public class BombermanController implements Initializable {
     }
 
     private void checkItemPickupForPlayer(Player player, int playerIndex) {
-        Item item = gameState.visibleItems.get(player.pos);
+        Item item = gameState.visibleItems.get(player.getPos());
         if (item != null) {
             applyItemEffect(player, item, playerIndex);
-            gameState.visibleItems.remove(player.pos);
+            gameState.visibleItems.remove(player.getPos());
         }
     }
 
     private void applyItemEffect(Player player, Item item, int playerIndex) {
-        switch (item.type) {
+        switch (item.getType()) {
             case FEU:
-                player.bombRange++;
-                player.feuBonusCount++;
-                player.score += 50;
+                player.setBombRange(player.getBombRange()+1);
+                player.setFeuBonusCount(player.getFeuBonusCount()+1);
                 break;
             case VITESSE:
-                player.speedMultiplier += 0.3;
-                player.vitesseBonusCount++;
-                player.score += 30;
+                player.setSpeedMultiplier(player.getSpeedMultiplier()+0.5);
+                player.setVitesseBonusCount(player.getVitesseBonusCount()+1);
                 break;
             case BOMBE:
-                player.maxBombs++;
-                player.bombsRemaining++;
-                player.bombeBonusCount++;
-                player.score += 40;
+                player.setMaxBombs(player.getMaxBombs()+1);
+                player.setBombsRemaining(player.getBombsRemaining()+1);
+                player.setBombeBonusCount(player.getBombeBonusCount()+1);
                 break;
             case SKULL:
-                player.lives--;
-                if (player.lives <= 0) {
-                    player.isAlive = false;
+                player.setLives(player.getLives()-1);
+                if (player.getLives() <= 0) {
+                    player.setisAlive(false);
                     checkGameOver();
                 } else {
                     resetPlayerBonuses(player);
@@ -754,10 +751,9 @@ public class BombermanController implements Initializable {
                 }
                 break;
             case KICK:
-                if (player.kickBonusCount < 2) {
-                    player.kickBonusCount++;
-                    player.canKick = true;
-                    player.score += 60;
+                if (player.getKickBonusCount() < 2) {
+                    player.setKickBonusCount(player.getKickBonusCount()+1);
+                    player.setcanKick(true);
                 }
                 break;
         }
@@ -765,17 +761,17 @@ public class BombermanController implements Initializable {
 
     private void resetPlayerBonuses(Player player) {
         // Réinitialiser tous les bonus aux valeurs par défaut
-        player.bombRange = 2;
-        player.speedMultiplier = 1.0;
-        player.maxBombs = 3;
-        player.bombsRemaining = 3;
+        player.setBombRange(2);
+        player.setSpeedMultiplier(1.0);
+        player.setMaxBombs(3);
+        player.setBombsRemaining(3);
 
         // Réinitialiser les compteurs de bonus
-        player.feuBonusCount = 0;
-        player.vitesseBonusCount = 0;
-        player.bombeBonusCount = 0;
-        player.kickBonusCount = 0;
-        player.canKick = false;
+        player.setFeuBonusCount(0);
+        player.setKickBonusCount(0);
+        player.setBombeBonusCount(0);
+        player.setVitesseBonusCount(0);
+        player.setcanKick(false);
     }
 
     private void startGameTimer() {
@@ -807,7 +803,7 @@ public class BombermanController implements Initializable {
         int winner = -1;
 
         for (int i = 0; i < 4; i++) {
-            if (gameState.players[i].isAlive) {
+            if (gameState.players[i].getisAlive()) {
                 alivePlayers++;
                 winner = i + 1;
             }
@@ -842,7 +838,7 @@ public class BombermanController implements Initializable {
 
     private boolean isPlayerAt(Position pos) {
         for (int i = 0; i < gameState.players.length; i++) {
-            if (gameState.players[i] != null && pos.equals(gameState.players[i].pos)) {
+            if (gameState.players[i] != null && pos.equals(gameState.players[i].getPos())) {
                 return true;
             }
         }
@@ -855,7 +851,7 @@ public class BombermanController implements Initializable {
 
         for (int i = 0; i < 4; i++) {
             if (bombsLabels[i] != null) {
-                bombsLabels[i].setText("Bombes: " + gameState.players[i].bombsRemaining);
+                bombsLabels[i].setText("Bombes: " + gameState.players[i].getBombsRemaining());
             }
         }
 
@@ -866,28 +862,28 @@ public class BombermanController implements Initializable {
 
         // Affichage des vies
         if (livesLabel != null) {
-            livesLabel.setText("x" + gameState.players[0].lives);
+            livesLabel.setText("x" + gameState.players[0].getLives());
         }
 
         if (livesLabel2 != null) {
-            livesLabel2.setText("x" + gameState.players[1].lives);
+            livesLabel2.setText("x" + gameState.players[1].getLives());
         }
         if (livesLabel3 != null) {
-            livesLabel3.setText("x" + gameState.players[2].lives);
+            livesLabel3.setText("x" + gameState.players[2].getLives());
         }
         if (livesLabel4 != null) {
-            livesLabel4.setText("x" + gameState.players[3].lives);
+            livesLabel4.setText("x" + gameState.players[3].getLives());
         }
 
         // Affichage des bonus
         if (bonusLabel != null) {
             String bonusText = String.format("J1 - Feu: %d | Vitesse: %d | Bombe: %d || J2 - Feu: %d | Vitesse: %d | Bombe: %d",
-                    gameState.players[0].feuBonusCount,
-                    gameState.players[0].vitesseBonusCount,
-                    gameState.players[0].bombeBonusCount,
-                    gameState.players[1].feuBonusCount,
-                    gameState.players[1].vitesseBonusCount,
-                    gameState.players[1].bombeBonusCount);
+                    gameState.players[0].getFeuBonusCount(),
+                    gameState.players[0].getVitesseBonusCount(),
+                    gameState.players[0].getBombeBonusCount(),
+                    gameState.players[1].getFeuBonusCount(),
+                    gameState.players[1].getVitesseBonusCount(),
+                    gameState.players[1].getBombeBonusCount());
             bonusLabel.setText(bonusText);
         }
     }
@@ -912,7 +908,7 @@ public class BombermanController implements Initializable {
             Item item = entry.getValue();
 
             Image itemImage = null;
-            switch (item.type) {
+            switch (item.getType()) {
                 case FEU:
                     itemImage = feuImage;
                     break;
@@ -928,10 +924,10 @@ public class BombermanController implements Initializable {
             }
 
             if (itemImage != null) {
-                gc.drawImage(itemImage, pos.x * CELL_SIZE, pos.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                gc.drawImage(itemImage, pos.getX() * CELL_SIZE, pos.getY() * CELL_SIZE, CELL_SIZE, CELL_SIZE);
             } else {
                 // Fallback avec des couleurs
-                switch (item.type) {
+                switch (item.getType()) {
                     case FEU:
                         gc.setFill(Color.web("#FF4444"));
                         break;
@@ -945,31 +941,31 @@ public class BombermanController implements Initializable {
                         gc.setFill(Color.web("#8B008B"));
                         break;
                 }
-                gc.fillOval(pos.x * CELL_SIZE + 8, pos.y * CELL_SIZE + 8, CELL_SIZE - 16, CELL_SIZE - 16);
+                gc.fillOval(pos.getX() * CELL_SIZE + 8, pos.getY() * CELL_SIZE + 8, CELL_SIZE - 16, CELL_SIZE - 16);
             }
         }
 
         // Murs indestructibles
         gc.setFill(Color.web("#424242"));
         for (Position wall : gameState.walls) {
-            gc.fillRect(wall.x * CELL_SIZE, wall.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+            gc.fillRect(wall.getX() * CELL_SIZE, wall.getY() * CELL_SIZE, CELL_SIZE, CELL_SIZE);
             // Effet 3D
             gc.setFill(Color.web("#616161"));
-            gc.fillRect(wall.x * CELL_SIZE, wall.y * CELL_SIZE, CELL_SIZE, 3);
-            gc.fillRect(wall.x * CELL_SIZE, wall.y * CELL_SIZE, 3, CELL_SIZE);
+            gc.fillRect(wall.getX() * CELL_SIZE, wall.getY() * CELL_SIZE, CELL_SIZE, 3);
+            gc.fillRect(wall.getX() * CELL_SIZE, wall.getY() * CELL_SIZE, 3, CELL_SIZE);
             gc.setFill(Color.web("#424242"));
         }
 
         // Murs destructibles
         for (Position wall : gameState.destructibleWalls) {
             if (brickImage != null) {
-                gc.drawImage(brickImage, wall.x * CELL_SIZE, wall.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                gc.drawImage(brickImage, wall.getX() * CELL_SIZE, wall.getY() * CELL_SIZE, CELL_SIZE, CELL_SIZE);
             } else {
                 gc.setFill(Color.web("#8D6E63"));
-                gc.fillRect(wall.x * CELL_SIZE, wall.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                gc.fillRect(wall.getX() * CELL_SIZE, wall.getY() * CELL_SIZE, CELL_SIZE, CELL_SIZE);
                 gc.setFill(Color.web("#A1887F"));
                 for (int i = 0; i < 3; i++) {
-                    gc.fillRect(wall.x * CELL_SIZE + 5, wall.y * CELL_SIZE + i * 12 + 5, CELL_SIZE - 10, 8);
+                    gc.fillRect(wall.getX() * CELL_SIZE + 5, wall.getY() * CELL_SIZE + i * 12 + 5, CELL_SIZE - 10, 8);
                 }
             }
         }
@@ -978,7 +974,7 @@ public class BombermanController implements Initializable {
         for (Explosion explosion : gameState.explosions) {
             if (fireball != null) {
                 // Utiliser l'image GIF d'explosion
-                gc.drawImage(fireball, explosion.pos.x * CELL_SIZE, explosion.pos.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                gc.drawImage(fireball, explosion.pos.getX() * CELL_SIZE, explosion.pos.getY() * CELL_SIZE, CELL_SIZE, CELL_SIZE);
             } else {
                 // Fallback avec animation de couleur
                 double intensity = (double) explosion.timer / 30;
@@ -987,7 +983,7 @@ public class BombermanController implements Initializable {
 
                 double size = CELL_SIZE * (0.5 + 0.5 * intensity);
                 double offset = (CELL_SIZE - size) / 2;
-                gc.fillOval(explosion.pos.x * CELL_SIZE + offset, explosion.pos.y * CELL_SIZE + offset, size, size);
+                gc.fillOval(explosion.pos.getX() * CELL_SIZE + offset, explosion.pos.getY() * CELL_SIZE + offset, size, size);
             }
         }
 
@@ -1010,18 +1006,18 @@ public class BombermanController implements Initializable {
         // Affichage des joueurs
         for (int i = 0; i < 4; i++) {
             Player player = gameState.players[i];
-            if (player.isAlive) {
+            if (player.getisAlive()) {
                 // Corps du joueur
                 gc.setFill(playerColors[i]);
-                gc.fillOval(player.pos.x * CELL_SIZE + 5, player.pos.y * CELL_SIZE + 5, CELL_SIZE - 10, CELL_SIZE - 10);
+                gc.fillOval(player.getPos().getX() * CELL_SIZE + 5, player.getPos().getY() * CELL_SIZE + 5, CELL_SIZE - 10, CELL_SIZE - 10);
 
                 // Highlight
                 gc.setFill(highlightColors[i]);
-                gc.fillOval(player.pos.x * CELL_SIZE + 8, player.pos.y * CELL_SIZE + 8, 8, 8);
+                gc.fillOval(player.getPos().getX() * CELL_SIZE + 8, player.getPos().getY() * CELL_SIZE + 8, 8, 8);
 
                 // Numéro du joueur
                 gc.setFill(Color.WHITE);
-                gc.fillText(String.valueOf(i + 1), player.pos.x * CELL_SIZE + CELL_SIZE/2 - 3, player.pos.y * CELL_SIZE + CELL_SIZE/2 + 3);
+                gc.fillText(String.valueOf(i + 1), player.getPos().getX() * CELL_SIZE + CELL_SIZE/2 - 3, player.getPos().getY() * CELL_SIZE + CELL_SIZE/2 + 3);
             }
         }
 
@@ -1029,16 +1025,16 @@ public class BombermanController implements Initializable {
         for (Bomb bomb : gameState.bombs) {
             if (explosionGifImage != null) {
                 // Utiliser l'image de bombe statique
-                gc.drawImage(explosionGifImage, bomb.pos.x * CELL_SIZE, bomb.pos.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                gc.drawImage(explosionGifImage, bomb.getPos().getX() * CELL_SIZE, bomb.getPos().getY() * CELL_SIZE, CELL_SIZE, CELL_SIZE);
             } else {
                 // Fallback avec animation clignotante (code original)
-                boolean blink = bomb.timer < 60 && (bomb.timer / 10) % 2 == 0;
+                boolean blink = bomb.getTimer() < 60 && (bomb.getTimer() / 10) % 2 == 0;
                 gc.setFill(blink ? Color.web("#F44336") : Color.web("#212121"));
-                gc.fillOval(bomb.pos.x * CELL_SIZE + 8, bomb.pos.y * CELL_SIZE + 8, CELL_SIZE - 16, CELL_SIZE - 16);
+                gc.fillOval(bomb.getPos().getX() * CELL_SIZE + 8, bomb.getPos().getY() * CELL_SIZE + 8, CELL_SIZE - 16, CELL_SIZE - 16);
 
                 // Mèche
                 gc.setFill(Color.web("#FF9800"));
-                gc.fillRect(bomb.pos.x * CELL_SIZE + CELL_SIZE/2 - 1, bomb.pos.y * CELL_SIZE + 5, 2, 8);
+                gc.fillRect(bomb.getPos().getX() * CELL_SIZE + CELL_SIZE/2 - 1, bomb.getPos().getY() * CELL_SIZE + 5, 2, 8);
             }
         }
 
