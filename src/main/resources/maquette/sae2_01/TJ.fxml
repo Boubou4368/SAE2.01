@@ -7,7 +7,7 @@
 <VBox xmlns="http://javafx.com/javafx/17.0.6"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="maquette.sae2_01.TJController"
-      stylesheets="@TJ.css"
+      stylesheets="@style/TJ.css"
       spacing="5" alignment="CENTER" style="-fx-padding: 20;"
       fx:id="root">
 

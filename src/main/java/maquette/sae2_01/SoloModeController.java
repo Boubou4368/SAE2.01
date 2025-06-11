@@ -9,6 +9,7 @@ import javafx.stage.Stage;
 
 public class SoloModeController {
 
+
     @FXML
     private void onNormal(ActionEvent event) {
         try {
@@ -22,15 +23,17 @@ public class SoloModeController {
             stage.setHeight(1000);
             stage.show();
 
-            // Donne le focus au canvas pour les touches clavier
+            // Récupérer le controller et l'initialiser
             BombermanController controller = loader.getController();
+            controller.initializeGame(false, 3);
+            boolean[] botConfig = {false, true, true, true}; // J1 humain, J2-J4 bots
+            controller.configureBots(botConfig);// Mode solo avec 3 bots
             controller.requestFocus();
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
     @FXML
     private void onCTF(ActionEvent event) {
         try {

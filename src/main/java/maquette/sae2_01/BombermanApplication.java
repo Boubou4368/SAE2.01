@@ -24,7 +24,7 @@ public class BombermanApplication extends Application {
     public void start(Stage primaryStage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("start.fxml"));
         Parent root = loader.load();
-        root.getStylesheets().add(getClass().getResource("start.css").toExternalForm());
+        root.getStylesheets().add(getClass().getResource("style/start.css").toExternalForm());
         Scene scene = new Scene(root);
 
         primaryStage.setTitle("Bomberman JavaFX - FXML Edition");

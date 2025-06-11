@@ -18,7 +18,7 @@ public class MenuController {
     public void initialize() {
         titleLabel.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
-                newScene.getStylesheets().add(getClass().getResource("menu.css").toExternalForm());
+                newScene.getStylesheets().add(getClass().getResource("style/menu.css").toExternalForm());
             }
         });
     }

@@ -19,4 +19,8 @@ public class Explosion {
     public String toString() {
         return "Explosion{pos=" + pos + ", timer=" + timer + "}";
     }
+
+    public boolean containsPosition(Position myPos) {
+        return pos.equals(myPos);
+    }
 }
