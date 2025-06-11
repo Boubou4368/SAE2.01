@@ -668,31 +668,50 @@ public class BombermanController implements Initializable {
     private void checkPlayersHit() {
         long currentTime = System.currentTimeMillis();
 
-        // Vérifier si l'invincibilité est terminée
-        if (gameState.players[0].getIsInvulnerable() && currentTime >= gameState.players[0].getInvulnerabilityEndTime()) {
-            gameState.players[0].setIsInvulnerable(false);
+        for (int i = 0; i < 4; i++) {
+            Player player = gameState.players[i];
+            if (player.getIsInvulnerable() && currentTime >= player.getInvulnerabilityEndTime()) {
+                player.setIsInvulnerable(false);
+                player.setBlinking(false); // Arrêter le clignotement
+            }
         }
-        if (gameState.players[1].getIsInvulnerable() && currentTime >= gameState.players[1].getInvulnerabilityEndTime()) {
-            gameState.players[1].setIsInvulnerable(false);
-        }
-        if (gameState.players[2].getIsInvulnerable() && currentTime >= gameState.players[2].getInvulnerabilityEndTime()) {
-            gameState.players[2].setIsInvulnerable(false);
-        }
-        if (gameState.players[3].getIsInvulnerable() && currentTime >= gameState.players[3].getInvulnerabilityEndTime()) {
-            gameState.players[3].setIsInvulnerable(false);
-        }
-
         for (Explosion explosion : gameState.explosions) {
             for (int i = 0; i < 4; i++) {
                 Player player = gameState.players[i];
-                if (player.getisAlive() && explosion.pos.equals(player.getPos()) && !gameState.players[i].getIsInvulnerable()) {
+
+                if (player.getisAlive() &&
+                        explosion.pos.equals(player.getPos()) &&
+                        !player.getIsInvulnerable()) {
+
+                    // Réduire les vies
                     player.setLives(player.getLives() - 1);
+
+                    // Vérifier si le joueur est mort
                     if (player.getLives() <= 0) {
+                        // Le joueur meurt
+                        player.setisAlive(false);
                         player.setIsInvulnerable(false);
+                        player.setBlinking(false);
+
+                        // Jouer un son de mort si vous en avez un
+                        // soundManager.playSound("player_death");
+
+                        System.out.println("Joueur " + (i + 1) + " est mort !");
+
+                        // Vérifier si le jeu est terminé
                         checkGameOver();
                     } else {
+                        // Le joueur perd une vie mais survit - le faire réapparaître
                         respawnPlayer(player, i);
+
+                        // Jouer un son de dégât si vous en avez un
+                        // soundManager.playSound("player_hurt");
+
+                        System.out.println("Joueur " + (i + 1) + " a perdu une vie. Vies restantes: " + player.getLives());
                     }
+
+                    // Important : sortir de la boucle pour éviter les multiples hits
+                    break;
                 }
             }
         }

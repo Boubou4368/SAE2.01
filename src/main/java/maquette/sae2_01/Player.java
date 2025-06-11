@@ -70,14 +70,17 @@ public class Player {
     public Position getPos() {
         return pos;
     }
+
     public void setPos(Position pos) {
         this.pos = pos;
     }
+
     public int getLives() { return lives; }
     public void setLives(int lives) { this.lives = lives; }
 
     public boolean getcanKick() { return canKick; }
     public void setcanKick(boolean canKick) { this.canKick = canKick; }
+
     public int getBombsRemaining(){
         return bombsRemaining;
     }
