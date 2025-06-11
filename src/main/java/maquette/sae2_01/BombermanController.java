@@ -2,30 +2,22 @@ package maquette.sae2_01;
 // ==========================================
 // BombermanController.java
 import javafx.animation.AnimationTimer;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-
-import javafx.application.Platform;
-
-import javafx.geometry.Pos;
-import javafx.event.EventHandler;
-
-import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.control.Button;
-import javafx.geometry.Pos;
 import javafx.stage.Stage;
-
-import javafx.scene.control.TextField;
-import javafx.scene.layout.HBox;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -61,6 +53,12 @@ public class BombermanController implements Initializable {
     private Stage primaryStage;
     private boolean gameStarted = false;
 
+    // Images de fond
+    private Image profileBackgroundImage;
+    private Image statsBackgroundImage;
+    private Image deleteBackgroundImage;
+    private Image victoryBackgroundImage;
+
     public void setPrimaryStage(Stage stage) {
         this.primaryStage = stage;
     }
@@ -68,26 +66,62 @@ public class BombermanController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         gc = gameCanvas.getGraphicsContext2D();
+        loadBackgroundImages();
         loadProfilesFromFile();
         
         // Afficher l'écran de saisie des profils au lieu de démarrer directement
         Platform.runLater(() -> showProfileSelectionScreen());
     }
 
+    private void loadBackgroundImages() {
+        try {
+            // Chargement des images de fond depuis le dossier resources/images
+            profileBackgroundImage = new Image(getClass().getResourceAsStream("/images/profile_background.jpg"));
+            statsBackgroundImage = new Image(getClass().getResourceAsStream("/images/stats_background.jpg"));
+            deleteBackgroundImage = new Image(getClass().getResourceAsStream("/images/delete_background.jpg"));
+            victoryBackgroundImage = new Image(getClass().getResourceAsStream("/images/victory_background.jpg"));
+        } catch (Exception e) {
+            System.out.println("Erreur lors du chargement des images de fond : " + e.getMessage());
+            // En cas d'erreur, on utilise des images par défaut ou on laisse null
+        }
+    }
+
+    private BackgroundImage createBackgroundImage(Image image) {
+        if (image == null) return null;
+
+        return new BackgroundImage(
+            image,
+            BackgroundRepeat.NO_REPEAT,
+            BackgroundRepeat.NO_REPEAT,
+            BackgroundPosition.CENTER,
+            new BackgroundSize(
+                BackgroundSize.AUTO, BackgroundSize.AUTO,
+                false, false, false, true
+            )
+        );
+    }
+
     private void showProfileSelectionScreen() {
         VBox mainBox = new VBox(20);
         mainBox.setAlignment(Pos.CENTER);
         mainBox.setPrefSize(800, 600);
-        mainBox.setStyle("-fx-background-color: #2E7D32;");
+
+        // Application de l'image de fond
+        BackgroundImage bgImage = createBackgroundImage(profileBackgroundImage);
+        if (bgImage != null) {
+            mainBox.setBackground(new Background(bgImage));
+        } else {
+            mainBox.setStyle("-fx-background-color: #2E7D32;");
+        }
 
         Label titleLabel = new Label("BOMBERMAN - SÉLECTION DES PROFILS");
-        titleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 28px; -fx-font-weight: bold;");
+        titleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 28px; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, black, 2, 0, 2, 2);");
 
         // Saisie Joueur 1
         VBox player1Box = new VBox(10);
         player1Box.setAlignment(Pos.CENTER);
-        Label player1Label = new Label("Joueur 1 (ZQSD + ESPACE):");
-        player1Label.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+        Label player1Label = new Label("Joueur 1 :");
+        player1Label.setStyle("-fx-text-fill: white; -fx-font-size: 16px; -fx-effect: dropshadow(gaussian, black, 1, 0, 1, 1);");
         TextField player1Field = new TextField();
         player1Field.setPromptText("Nom du profil joueur 1");
         player1Field.setMaxWidth(200);
@@ -96,8 +130,8 @@ public class BombermanController implements Initializable {
         // Saisie Joueur 2
         VBox player2Box = new VBox(10);
         player2Box.setAlignment(Pos.CENTER);
-        Label player2Label = new Label("Joueur 2 (Flèches + ENTRÉE):");
-        player2Label.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+        Label player2Label = new Label("Joueur 2 :");
+        player2Label.setStyle("-fx-text-fill: white; -fx-font-size: 16px; -fx-effect: dropshadow(gaussian, black, 1, 0, 1, 1);");
         TextField player2Field = new TextField();
         player2Field.setPromptText("Nom du profil joueur 2");
         player2Field.setMaxWidth(200);
@@ -106,8 +140,8 @@ public class BombermanController implements Initializable {
         // Saisie Joueur 3
         VBox player3Box = new VBox(10);
         player3Box.setAlignment(Pos.CENTER);
-        Label player3Label = new Label("Joueur 3 (IJKL + SHIFT):");
-        player3Label.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+        Label player3Label = new Label("Joueur 3 :");
+        player3Label.setStyle("-fx-text-fill: white; -fx-font-size: 16px; -fx-effect: dropshadow(gaussian, black, 1, 0, 1, 1);");
         TextField player3Field = new TextField();
         player3Field.setPromptText("Nom du profil joueur 3");
         player3Field.setMaxWidth(200);
@@ -116,8 +150,8 @@ public class BombermanController implements Initializable {
         // Saisie Joueur 4
         VBox player4Box = new VBox(10);
         player4Box.setAlignment(Pos.CENTER);
-        Label player4Label = new Label("Joueur 4 (TFGH + TAB):");
-        player4Label.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+        Label player4Label = new Label("Joueur 4 :");
+        player4Label.setStyle("-fx-text-fill: white; -fx-font-size: 16px; -fx-effect: dropshadow(gaussian, black, 1, 0, 1, 1);");
         TextField player4Field = new TextField();
         player4Field.setPromptText("Nom du profil joueur 4");
         player4Field.setMaxWidth(200);
@@ -128,7 +162,7 @@ public class BombermanController implements Initializable {
         buttonBox.setAlignment(Pos.CENTER);
 
         Button startButton = new Button("COMMENCER LA PARTIE");
-        startButton.setStyle("-fx-font-size: 18px; -fx-padding: 10px 20px;");
+        startButton.setStyle("-fx-font-size: 18px; -fx-padding: 10px 20px; -fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;");
         startButton.setOnAction(e -> {
             String p1Name = player1Field.getText().trim();
             String p2Name = player2Field.getText().trim();
@@ -154,11 +188,11 @@ public class BombermanController implements Initializable {
         });
 
         Button statsButton = new Button("VOIR LES STATISTIQUES");
-        statsButton.setStyle("-fx-font-size: 18px; -fx-padding: 10px 20px;");
+        statsButton.setStyle("-fx-font-size: 18px; -fx-padding: 10px 20px; -fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold;");
         statsButton.setOnAction(e -> showPlayerStatsFromProfileSelection());
 
         Button deleteProfileButton = new Button("SUPPRIMER UN PROFIL");
-        deleteProfileButton.setStyle("-fx-font-size: 18px; -fx-padding: 10px 20px;");
+        deleteProfileButton.setStyle("-fx-font-size: 18px; -fx-padding: 10px 20px; -fx-background-color: #F44336; -fx-text-fill: white; -fx-font-weight: bold;");
         deleteProfileButton.setOnAction(e -> showDeleteProfileScreen());
 
         buttonBox.getChildren().addAll(startButton, statsButton, deleteProfileButton);
@@ -181,20 +215,27 @@ public class BombermanController implements Initializable {
         VBox deleteBox = new VBox(20);
         deleteBox.setAlignment(Pos.CENTER);
         deleteBox.setPrefSize(800, 600);
-        deleteBox.setStyle("-fx-background-color: #2E7D32;");
+
+        // Application de l'image de fond
+        BackgroundImage bgImage = createBackgroundImage(deleteBackgroundImage);
+        if (bgImage != null) {
+            deleteBox.setBackground(new Background(bgImage));
+        } else {
+            deleteBox.setStyle("-fx-background-color: #2E7D32;");
+        }
 
         Label titleLabel = new Label("SUPPRIMER UN PROFIL");
-        titleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;");
+        titleLabel.setStyle("-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, black, 2, 0, 2, 2);");
 
         TextField nameField = new TextField();
         nameField.setPromptText("Nom du profil à supprimer");
         nameField.setMaxWidth(250);
 
         Label resultLabel = new Label();
-        resultLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+        resultLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px; -fx-effect: dropshadow(gaussian, black, 1, 0, 1, 1);");
 
         Button confirmButton = new Button("SUPPRIMER");
-        confirmButton.setStyle("-fx-font-size: 16px;");
+        confirmButton.setStyle("-fx-font-size: 16px; -fx-background-color: #F44336; -fx-text-fill: white; -fx-font-weight: bold;");
         confirmButton.setOnAction(e -> {
             String nameToDelete = nameField.getText().trim();
             boolean removed = deleteProfile(nameToDelete);
@@ -206,6 +247,7 @@ public class BombermanController implements Initializable {
         });
 
         Button backButton = new Button("Retour");
+        backButton.setStyle("-fx-font-size: 16px; -fx-background-color: #757575; -fx-text-fill: white; -fx-font-weight: bold;");
         backButton.setOnAction(e -> showProfileSelectionScreen());
 
         deleteBox.getChildren().addAll(titleLabel, nameField, confirmButton, resultLabel, backButton);
@@ -221,17 +263,24 @@ public class BombermanController implements Initializable {
         VBox statsBox = new VBox(15);
         statsBox.setAlignment(Pos.CENTER);
         statsBox.setPrefSize(800, 600);
-        statsBox.setStyle("-fx-background-color: #2E7D32;");
+
+        // Application de l'image de fond
+        BackgroundImage bgImage = createBackgroundImage(statsBackgroundImage);
+        if (bgImage != null) {
+            statsBox.setBackground(new Background(bgImage));
+        } else {
+            statsBox.setStyle("-fx-background-color: #2E7D32;");
+        }
 
         Label title = new Label("CLASSEMENT DES JOUEURS");
-        title.setStyle("-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;");
+        title.setStyle("-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, blue, 2, 0, 2, 2);");
 
         VBox playersBox = new VBox(10);
         playersBox.setAlignment(Pos.CENTER);
 
         if (profileList.isEmpty()) {
             Label noDataLabel = new Label("Aucune statistique disponible");
-            noDataLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+            noDataLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px; -fx-effect: dropshadow(gaussian, black, 1, 0, 1, 1);");
             playersBox.getChildren().add(noDataLabel);
         } else {
             int rank = 1;
@@ -239,13 +288,13 @@ public class BombermanController implements Initializable {
                 String statsText = String.format("%d. %s - %d V / %d D (%.1f%%)",
                     rank++, profile.name, profile.victories, profile.defeats, profile.getWinRate());
                 Label statsLabel = new Label(statsText);
-                statsLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+                statsLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px; -fx-effect: dropshadow(gaussian, blue, 1, 0, 1, 1);");
                 playersBox.getChildren().add(statsLabel);
             }
         }
 
         Button backButton = new Button("Retour à la sélection");
-        backButton.setStyle("-fx-font-size: 16px; -fx-padding: 8px 16px;");
+        backButton.setStyle("-fx-font-size: 16px; -fx-padding: 8px 16px; -fx-background-color: #757575; -fx-text-fill: white; -fx-font-weight: bold;");
         backButton.setOnAction(e -> showProfileSelectionScreen());
 
         statsBox.getChildren().addAll(title, playersBox, backButton);
@@ -614,6 +663,30 @@ public class BombermanController implements Initializable {
         }
     }
 
+    private void updateGameStats(String winner, int winnerScore) {
+        List<String> allPlayers = Arrays.asList(player1Profile, player2Profile, player3Profile, player4Profile);
+
+        for (PlayerProfile profile : profileList) {
+            if (profile.name.equals(winner)) {
+                profile.addVictory(winnerScore);
+            } else if (allPlayers.contains(profile.name)) {
+                profile.addDefeat();
+            }
+        }
+        saveProfilesToFile();
+    }
+
+    private void updateGameStatsAllDefeated() {
+        List<String> allPlayers = Arrays.asList(player1Profile, player2Profile, player3Profile, player4Profile);
+
+        for (PlayerProfile profile : profileList) {
+            if (allPlayers.contains(profile.name)) {
+                profile.addDefeat();
+            }
+        }
+        saveProfilesToFile();
+    }
+
     private void checkWinCondition() {
         // Compter les joueurs vivants et identifier le gagnant
         List<Player> alivePlayers = new ArrayList<>();
@@ -643,40 +716,18 @@ public class BombermanController implements Initializable {
                 String winner = alivePlayerNames.get(0);
                 int winnerScore = alivePlayers.get(0).score;
                 updateGameStats(winner, winnerScore);
-                gameOver("Victoire de " + winner + " !");
+                showVictoryScreen("Victoire de " + winner + " !");
             } else {
                 // Aucun survivant (tous morts en même temps)
                 updateGameStatsAllDefeated();
-                gameOver("Tous les joueurs ont été éliminés !");
-            }
-        }
-    }
-
-    private void updateGameStats(String winner, int winnerScore) {
-        List<String> allPlayers = Arrays.asList(player1Profile, player2Profile, player3Profile, player4Profile);
-
-        for (PlayerProfile profile : profileList) {
-            if (profile.name.equals(winner)) {
-                profile.addVictory(winnerScore);
-            } else if (allPlayers.contains(profile.name)) {
-                profile.addDefeat();
+                showVictoryScreen("Tous les joueurs ont été éliminés !");
             }
         }
         saveProfilesToFile();
     }
 
-    private void updateGameStatsAllDefeated() {
-        List<String> allPlayers = Arrays.asList(player1Profile, player2Profile, player3Profile, player4Profile);
 
-        for (PlayerProfile profile : profileList) {
-            if (allPlayers.contains(profile.name)) {
-                profile.addDefeat();
-            }
-        }
-        saveProfilesToFile();
-    }
-
-    private void gameOver(String message) {
+    private void showVictoryScreen(String message) {
         if (gameLoop != null) {
             gameLoop.stop();
         }
@@ -686,24 +737,33 @@ public class BombermanController implements Initializable {
             VBox vbox = new VBox(20);
             vbox.setAlignment(Pos.CENTER);
             vbox.setPrefSize(800, 600);
-            vbox.setStyle("-fx-background-color: #2E7D32;");
 
-            Label gameOverLabel = new Label(message);
-            gameOverLabel.setStyle("-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;");
+            BackgroundImage bgImage = createBackgroundImage(victoryBackgroundImage);
+            if (bgImage != null) {
+                vbox.setBackground(new Background(bgImage));
+            } else {
+                vbox.setStyle("-fx-background-color: #2E7D32;");
+            }
+
+            Label victoryLabel = new Label(message);
+            victoryLabel.setStyle("-fx-text-fill: white; -fx-font-size: 28px; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, black, 2, 0, 2, 2);");
 
             Button showStatsButton = new Button("Voir les statistiques");
+            showStatsButton.setStyle("-fx-font-size: 16px; -fx-background-color: #2196F3; -fx-text-fill: white;");
             showStatsButton.setOnAction(e -> showPlayerStats());
 
             Button replayButton = new Button("Rejouer");
+            replayButton.setStyle("-fx-font-size: 16px; -fx-background-color: #4CAF50; -fx-text-fill: white;");
             replayButton.setOnAction(e -> restartGame());
 
             Button quitButton = new Button("Quitter");
+            quitButton.setStyle("-fx-font-size: 16px; -fx-background-color: #F44336; -fx-text-fill: white;");
             quitButton.setOnAction(e -> Platform.exit());
 
-            vbox.getChildren().addAll(gameOverLabel, showStatsButton, replayButton, quitButton);
+            vbox.getChildren().addAll(victoryLabel, showStatsButton, replayButton, quitButton);
 
-            Scene gameOverScene = new Scene(vbox);
-            primaryStage.setScene(gameOverScene);
+            Scene victoryScene = new Scene(vbox);
+            primaryStage.setScene(victoryScene);
         });
     }
 
@@ -732,7 +792,7 @@ public class BombermanController implements Initializable {
         }
 
         Button backButton = new Button("Retour");
-        backButton.setOnAction(e -> gameOver("Fin de partie"));
+        backButton.setOnAction(e -> showVictoryScreen("Fin de partie"));
 
         statsBox.getChildren().addAll(title, playersBox, backButton);
 
