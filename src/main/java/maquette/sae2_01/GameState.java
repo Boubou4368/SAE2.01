@@ -5,7 +5,7 @@ import java.util.*;
 public class GameState {
     private static final int GRID_SIZE = 15;
 
-    public Player[] players = new Player[4];
+    public Player[] players;
     public List<Bomb> bombs = new ArrayList<>();
     public List<Explosion> explosions = new ArrayList<>();
     public Set<Position> walls = new HashSet<>();
@@ -33,36 +33,17 @@ public class GameState {
             // Mode solo - créer 1 joueur humain + des bots
             players[0] = new Player(1, 1); // Joueur humain
             players[0].setBot(false);
-
-            // Créer les bots selon numberOfBots (max 3 en mode solo)
-            createBots(Math.min(numberOfBots, 3));
+            players[1] = new Bot(GRID_SIZE - 3, GRID_SIZE - 1);
+            players[2] = new Bot(1, GRID_SIZE - 2);
+            players[3] = new Bot(GRID_SIZE - 2, 1);
+            for (int i = 1; i < 4; i++) {
+                players[i].setBot(true);
+            }
         }
 
         initializeMap();
     }
 
-    private void createBots(int numberOfBots) {
-        // Positions de départ pour les bots
-        Position[] botPositions = {
-                new Position(GRID_SIZE - 2, GRID_SIZE - 2),   // Bot 1 - coin bas-droite
-                new Position(1, GRID_SIZE - 2),               // Bot 2 - coin bas-gauche
-                new Position(GRID_SIZE - 2, 1)                // Bot 3 - coin haut-droite
-        };
-
-        // Créer les bots demandés
-        for (int i = 0; i < numberOfBots && i < 3; i++) {
-            players[i + 1] = new Player(botPositions[i].getX(), botPositions[i].getY());
-            players[i + 1].setBot(true);
-        }
-
-        // Remplir les slots restants avec des joueurs inactifs si nécessaire
-        for (int i = numberOfBots + 1; i < 4; i++) {
-            // Créer des joueurs "fantômes" inactifs
-            players[i] = new Player(-1, -1); // Position hors grille
-            players[i].setisAlive(false);
-            players[i].setBot(false);
-        }
-    }
     private void initializeMap() {
         // Créer les murs fixes (bordures et colonnes/lignes paires)
         for (int i = 0; i < GRID_SIZE; i++) {
@@ -218,4 +199,14 @@ public class GameState {
         }
         System.out.println("================");
     }
+
+    public int getPlayerIndex(Player player) {
+        for (int i = 0; i < players.length; i++) {
+            if (players[i].equals(player)) {
+                return i;
+            }
+        }
+        return -1; // retourne -1 si le joueur n'est pas trouvé
+    }
+
 }

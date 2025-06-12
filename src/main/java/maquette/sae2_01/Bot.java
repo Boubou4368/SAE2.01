@@ -30,13 +30,16 @@ public class Bot extends Player {
         EXPLORING,      // Cherche des bonus/ennemis
         FLEEING,        // Fuit une explosion
         HUNTING,        // Poursuit un joueur
-        COLLECTING      // Va vers un bonus
+        COLLECTING,
+        WALL_BREAKING
     }
 
     public Bot(int x, int y) {
         super(x, y);
+        this.difficulty = BotDifficulty.HARD;
         this.random = new Random();
         this.currentState = BotState.EXPLORING;
+
     }
 
 
@@ -44,12 +47,13 @@ public class Bot extends Player {
     public BotAction getNextAction(GameState gameState) {
         long currentTime = System.currentTimeMillis();
 
-        // Respecter le délai entre les actions selon la difficulté
+        // Respect action delay based on difficulty
         if (currentTime - lastActionTime < difficulty.actionDelay) {
             return BotAction.NONE;
         }
 
-        // Analyser l'état du jeu et déterminer la meilleure action
+
+        // Analyze game state and determine best action
         BotAction action = decideAction(gameState);
 
         if (action != BotAction.NONE) {
@@ -59,8 +63,9 @@ public class Bot extends Player {
         return action;
     }
 
+
     private BotAction decideAction(GameState gameState) {
-        // 1. Priorité absolue : fuir si en danger
+        // 1. Absolute priority: flee if in danger
         if (isInDanger(gameState)) {
             currentState = BotState.FLEEING;
             Position safePos = findSafePosition(gameState);
@@ -69,7 +74,8 @@ public class Bot extends Player {
             }
         }
 
-        // 2. Décision intelligente vs aléatoire selon la difficulté
+
+        // 3. Smart vs random decision based on difficulty
         if (random.nextDouble() < difficulty.smartnessRatio) {
             return makeSmartDecision(gameState);
         } else {
@@ -78,42 +84,44 @@ public class Bot extends Player {
     }
 
     private BotAction makeSmartDecision(GameState gameState) {
-        // Chercher des joueurs à proximité pour les attaquer
+        // Look for nearby players to attack
         Player nearestPlayer = findNearestPlayer(gameState);
-        if (nearestPlayer != null && getDistanceToPlayer(nearestPlayer) <= 3) {
+        if (nearestPlayer != null && getDistanceToPlayer(nearestPlayer) <= 4) {
             currentState = BotState.HUNTING;
 
-            // Si assez proche et chance de bomber
-            if (getDistanceToPlayer(nearestPlayer) <=  getBombRange() + 1 &&
+            // If close enough and chance to bomb
+            if (getDistanceToPlayer(nearestPlayer) <= getBombRange() + 1 &&
                     random.nextDouble() < difficulty.bombChance &&
-                    getBombsRemaining() > 0) {
+                    getBombsRemaining() > 0 &&
+                    isPositionSafe(getPos(), gameState)) {
                 return BotAction.PLACE_BOMB;
             }
 
-            // Sinon se rapprocher
+            // Otherwise get closer
             return getMoveTowardsPosition(nearestPlayer.getPos(), gameState);
         }
 
-        // Chercher des bonus visibles
+        // Look for visible bonuses
         Position nearestBonus = findNearestBonus(gameState);
         if (nearestBonus != null) {
             currentState = BotState.COLLECTING;
             return getMoveTowardsPosition(nearestBonus, gameState);
         }
 
-        // Chercher des murs destructibles à détruire
+        // Look for destructible walls to destroy
         Position nearestWall = findNearestDestructibleWall(gameState);
         if (nearestWall != null && getBombsRemaining() > 0) {
+            currentState = BotState.WALL_BREAKING;
             Position bombPos = findBombPositionForWall(nearestWall, gameState);
             if (bombPos != null) {
-                if (getPos().equals(bombPos)) {
+                if (getPos().equals(bombPos) && isPositionSafe(getPos(), gameState)) {
                     return BotAction.PLACE_BOMB;
                 }
                 return getMoveTowardsPosition(bombPos, gameState);
             }
         }
 
-        // Exploration générale
+        // General exploration
         currentState = BotState.EXPLORING;
         return exploreMap(gameState);
     }
@@ -121,14 +129,16 @@ public class Bot extends Player {
     private BotAction makeRandomDecision(GameState gameState) {
         List<BotAction> possibleActions = new ArrayList<>();
 
-        // Ajouter les mouvements possibles
+        // Add possible movements
         if (canMove(gameState, Direction.UP)) possibleActions.add(BotAction.MOVE_UP);
         if (canMove(gameState, Direction.DOWN)) possibleActions.add(BotAction.MOVE_DOWN);
         if (canMove(gameState, Direction.LEFT)) possibleActions.add(BotAction.MOVE_LEFT);
         if (canMove(gameState, Direction.RIGHT)) possibleActions.add(BotAction.MOVE_RIGHT);
 
-        // Parfois poser une bombe
-        if (getBombsRemaining() > 0 && random.nextDouble() < 0.1) {
+        // Sometimes place a bomb (only if safe)
+        if (getBombsRemaining() > 0 &&
+                random.nextDouble() < 0.1 &&
+                isPositionSafe(getPos(), gameState)) {
             possibleActions.add(BotAction.PLACE_BOMB);
         }
 
@@ -138,18 +148,32 @@ public class Bot extends Player {
 
         return possibleActions.get(random.nextInt(possibleActions.size()));
     }
+    private BotAction makeRandomMovement(GameState gameState) {
+        List<BotAction> possibleMoves = new ArrayList<>();
+
+        if (canMove(gameState, Direction.UP)) possibleMoves.add(BotAction.MOVE_UP);
+        if (canMove(gameState, Direction.DOWN)) possibleMoves.add(BotAction.MOVE_DOWN);
+        if (canMove(gameState, Direction.LEFT)) possibleMoves.add(BotAction.MOVE_LEFT);
+        if (canMove(gameState, Direction.RIGHT)) possibleMoves.add(BotAction.MOVE_RIGHT);
+
+        if (possibleMoves.isEmpty()) {
+            return BotAction.NONE;
+        }
+
+        return possibleMoves.get(random.nextInt(possibleMoves.size()));
+    }
 
     private boolean isInDanger(GameState gameState) {
         Position myPos = getPos();
 
-        // Vérifier si dans la zone d'explosion d'une bombe
+        // Check if in explosion range of a bomb
         for (Bomb bomb : gameState.bombs) {
             if (isInExplosionRange(myPos, bomb, gameState)) {
                 return true;
             }
         }
 
-        // Vérifier les explosions actuelles
+        // Check current explosions
         for (Explosion explosion : gameState.explosions) {
             if (explosion.containsPosition(myPos)) {
                 return true;
@@ -161,18 +185,28 @@ public class Bot extends Player {
 
     private boolean isInExplosionRange(Position pos, Bomb bomb, GameState gameState) {
         Position bombPos = bomb.getPos();
-        int range = bomb.getOwner();
 
-        // Même ligne horizontale
+        // Get the bomb range from the owner player
+        Player bombOwner = null;
+        for (Player player : gameState.getPlayers()) {
+            if (player != null && gameState.getPlayerIndex(player) == bomb.getOwner()) {
+                bombOwner = player;
+                break;
+            }
+        }
+
+        // If we can't find the owner, use default range of 2
+        int range = (bombOwner != null) ? bombOwner.getBombRange() : 2;
+
+        // Same horizontal line
         if (pos.getY() == bombPos.getY()) {
             int distance = Math.abs(pos.getX() - bombPos.getX());
             if (distance <= range) {
-                // Vérifier qu'il n'y a pas de mur entre la bombe et la position
                 return !hasWallBetween(bombPos, pos, gameState);
             }
         }
 
-        // Même ligne verticale
+        // Same vertical line
         if (pos.getX() == bombPos.getX()) {
             int distance = Math.abs(pos.getY() - bombPos.getY());
             if (distance <= range) {
@@ -203,9 +237,9 @@ public class Bot extends Player {
         Position myPos = getPos();
         List<Position> candidates = new ArrayList<>();
 
-        // Chercher dans un rayon de 4 cases
-        for (int dx = -4; dx <= 4; dx++) {
-            for (int dy = -4; dy <= 4; dy++) {
+        // Search in a radius of 5 squares
+        for (int dx = -5; dx <= 5; dx++) {
+            for (int dy = -5; dy <= 5; dy++) {
                 Position candidate = new Position(myPos.getX() + dx, myPos.getY() + dy);
 
                 if (isPositionSafe(candidate, gameState) &&
@@ -215,35 +249,43 @@ public class Bot extends Player {
             }
         }
 
-        // Retourner la position safe la plus proche
+        // Return the closest safe position
         return candidates.isEmpty() ? null :
                 candidates.stream()
-                        .min(Comparator.comparingDouble(p -> getDistance(myPos, p)))
+                        .min(Comparator.comparingDouble(p -> getManhattanDistance(myPos, p)))
                         .orElse(null);
     }
 
     private boolean isPositionSafe(Position pos, GameState gameState) {
-        // Vérifier qu'aucune bombe ne menace cette position
+        // Check that no bomb threatens this position
         for (Bomb bomb : gameState.bombs) {
             if (isInExplosionRange(pos, bomb, gameState)) {
                 return false;
             }
         }
+
+        // Check current explosions
+        for (Explosion explosion : gameState.explosions) {
+            if (explosion.containsPosition(pos)) {
+                return false;
+            }
+        }
+
         return true;
     }
 
     private boolean isPositionWalkable(Position pos, GameState gameState) {
-        // Vérifier les limites de la carte (15x15)
+        // Check map boundaries (15x15)
         if (pos.getX() < 0 || pos.getY() < 0 || pos.getX() >= 15 || pos.getY() >= 15) {
             return false;
         }
 
-        // Vérifier les murs fixes et destructibles
+        // Check fixed and destructible walls
         if (gameState.walls.contains(pos) || gameState.destructibleWalls.contains(pos)) {
             return false;
         }
 
-        // Vérifier qu'il n'y a pas d'autre joueur ou bombe à cette position
+        // Check that there's no other player or bomb at this position
         for (Player player : gameState.getPlayers()) {
             if (player != this && player.getisAlive() && player.getPos().equals(pos)) {
                 return false;
@@ -266,7 +308,7 @@ public class Bot extends Player {
 
         for (Player player : gameState.getPlayers()) {
             if (player != this && player.getisAlive()) {
-                double distance = getDistance(myPos, player.getPos());
+                double distance = getManhattanDistance(myPos, player.getPos());
                 if (distance < minDistance) {
                     minDistance = distance;
                     nearest = player;
@@ -283,7 +325,7 @@ public class Bot extends Player {
         double minDistance = Double.MAX_VALUE;
 
         for (Position bonusPos : gameState.visibleItems.keySet()) {
-            double distance = getDistance(myPos, bonusPos);
+            double distance = getManhattanDistance(myPos, bonusPos);
             if (distance < minDistance) {
                 minDistance = distance;
                 nearest = bonusPos;
@@ -299,8 +341,8 @@ public class Bot extends Player {
         double minDistance = Double.MAX_VALUE;
 
         for (Position wallPos : gameState.destructibleWalls) {
-            double distance = getDistance(myPos, wallPos);
-            if (distance < minDistance && distance <= getBombRange() + 2) {
+            double distance = getManhattanDistance(myPos, wallPos);
+            if (distance < minDistance && distance <= getBombRange() + 3) {
                 minDistance = distance;
                 nearest = wallPos;
             }
@@ -313,31 +355,31 @@ public class Bot extends Player {
         Position myPos = getPos();
         List<Position> candidates = new ArrayList<>();
 
-        // Positions possibles pour détruire le mur
+        // Possible positions to destroy the wall
         int[][] directions = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
 
         for (int[] dir : directions) {
             for (int i = 1; i <= getBombRange(); i++) {
                 Position candidate = new Position(wall.getX() + dir[0] * i, wall.getY() + dir[1] * i);
-                if (isPositionWalkable(candidate, gameState)) {
+                if (isPositionWalkable(candidate, gameState) &&
+                        isPositionSafe(candidate, gameState)) {
                     candidates.add(candidate);
                 }
             }
         }
 
-        // Retourner la position la plus proche
+        // Return the closest position
         return candidates.stream()
-                .min(Comparator.comparingDouble(p -> getDistance(myPos, p)))
+                .min(Comparator.comparingDouble(p -> getManhattanDistance(myPos, p)))
                 .orElse(null);
     }
 
-    private double getDistance(Position p1, Position p2) {
-        return Math.sqrt(Math.pow(p1.getX() - p2.getX(), 2) +
-                Math.pow(p1.getY() - p2.getY(), 2));
+    private double getManhattanDistance(Position p1, Position p2) {
+        return Math.abs(p1.getX() - p2.getX()) + Math.abs(p1.getY() - p2.getY());
     }
 
     private double getDistanceToPlayer(Player player) {
-        return getDistance(getPos(), player.getPos());
+        return getManhattanDistance(getPos(), player.getPos());
     }
 
     private BotAction getMoveTowardsPosition(Position target, GameState gameState) {
@@ -346,7 +388,7 @@ public class Bot extends Player {
         int dx = target.getX() - myPos.getX();
         int dy = target.getY() - myPos.getY();
 
-        // Essayer le mouvement prioritaire
+        // Try priority movement
         BotAction primaryAction = null;
         BotAction secondaryAction = null;
 
@@ -358,14 +400,14 @@ public class Bot extends Player {
             secondaryAction = dx > 0 ? BotAction.MOVE_RIGHT : BotAction.MOVE_LEFT;
         }
 
-        // Vérifier si le mouvement prioritaire est possible
+        // Check if priority movement is possible
         if (canMoveInDirection(primaryAction, gameState)) {
             return primaryAction;
         } else if (canMoveInDirection(secondaryAction, gameState)) {
             return secondaryAction;
         }
 
-        // Si aucun mouvement direct n'est possible, essayer les autres directions
+        // If no direct movement is possible, try other directions
         BotAction[] allActions = {BotAction.MOVE_UP, BotAction.MOVE_DOWN,
                 BotAction.MOVE_LEFT, BotAction.MOVE_RIGHT};
         for (BotAction action : allActions) {
@@ -393,7 +435,7 @@ public class Bot extends Player {
     }
 
     private BotAction exploreMap(GameState gameState) {
-        // Mouvement d'exploration simple - éviter de rester bloqué
+        // Simple exploration movement - avoid getting stuck
         List<Direction> directions = Arrays.asList(Direction.UP, Direction.DOWN,
                 Direction.LEFT, Direction.RIGHT);
         Collections.shuffle(directions);
@@ -436,6 +478,7 @@ public class Bot extends Player {
     // Getters
     public BotDifficulty getDifficulty() { return difficulty; }
     public BotState getCurrentState() { return currentState; }
+    public void setDifficulty(BotDifficulty difficulty) { this.difficulty = difficulty; }
 }
 
 // BotAction.java - Actions possibles pour le bot
@@ -455,15 +498,18 @@ enum Direction {
 
 // BotManager.java - Gestionnaire pour plusieurs bots
 class BotManager {
+    private static final long MOVE_DELAY_NS = 500_000_000L; // 500ms en nanosecondes
     private List<Bot> bots;
     private GameState gameState;
+    private long[] lastMoveTimes; // Tableau pour stocker le dernier temps de mouvement de chaque bot
 
     public BotManager(GameState gameState) {
         this.gameState = gameState;
         this.bots = new ArrayList<>();
+        this.lastMoveTimes = new long[4]; // Pour 4 joueurs max
     }
 
-    public void addBot(int x, int y ) {
+    public void addBot(int x, int y) {
         Bot bot = new Bot(x, y);
         bots.add(bot);
 
@@ -472,23 +518,38 @@ class BotManager {
         for (int i = 0; i < gameState.getPlayers().length; i++) {
             if (gameState.getPlayers()[i] == null || !gameState.getPlayers()[i].getisAlive()) {
                 gameState.getPlayers()[i] = bot;
+                lastMoveTimes[i] = 0; // Initialiser le temps de mouvement
+                System.out.println("Bot ajouté au slot " + i);
                 break;
             }
         }
     }
 
     public void updateBots(long currentTime) {
-        for (Bot bot : bots) {
-            if (bot.getisAlive()) {
-                BotAction action = bot.getNextAction(gameState);
-                executeAction(bot, action);
+        // Parcourir tous les slots de joueurs pour trouver les bots
+        for (int i = 0; i < gameState.getPlayers().length; i++) {
+            Player player = gameState.getPlayers()[i];
+
+            if (player != null && player.isBot() && player.getisAlive()) {
+                // Vérifier si assez de temps s'est écoulé depuis le dernier mouvement
+                if (currentTime - lastMoveTimes[i] > MOVE_DELAY_NS) {
+                    Bot bot = (Bot) player;
+                    BotAction action = bot.getNextAction(gameState);
+
+                    System.out.println("Bot " + (i + 1) + " - Action: " + action);
+
+                    if (executeAction(bot, action, i)) {
+                        lastMoveTimes[i] = currentTime; // Mettre à jour le temps seulement si l'action a réussi
+                    }
+                }
             }
         }
     }
 
-    private void executeAction(Bot bot, BotAction action) {
+    private boolean executeAction(Bot bot, BotAction action, int playerIndex) {
         Position currentPos = bot.getPos();
         Position newPos = null;
+        boolean actionExecuted = false;
 
         switch (action) {
             case MOVE_UP:
@@ -506,43 +567,57 @@ class BotManager {
             case PLACE_BOMB:
                 // Créer une nouvelle bombe à la position du bot
                 if (bot.getBombsRemaining() > 0) {
-                    Bomb newBomb = new Bomb(currentPos.getX(),currentPos.getY(), bot.getBombRange());
+                    Bomb newBomb = new Bomb(currentPos.getX(), currentPos.getY(), bot.getBombRange());
                     gameState.bombs.add(newBomb);
                     bot.setBombsRemaining(bot.getBombsRemaining() - 1);
+                    System.out.println("Bot " + (playerIndex + 1) + " place une bombe");
+                    actionExecuted = true;
                 }
                 break;
             case NONE:
-                // Ne rien faire
+                // Ne rien faire mais considérer comme exécuté pour le timing
+                actionExecuted = true;
                 break;
         }
 
         // Effectuer le mouvement si possible
-        if (newPos != null && isValidMove(newPos)) {
+        if (newPos != null && isValidMove(newPos, playerIndex)) {
             bot.setPos(newPos);
+            System.out.println("Bot " + (playerIndex + 1) + " bouge vers " + newPos.getX() + "," + newPos.getY());
 
             // Vérifier si le bot ramasse un bonus
             Item item = gameState.visibleItems.get(newPos);
             if (item != null) {
                 bot.applyItem(item);
                 gameState.visibleItems.remove(newPos);
+                System.out.println("Bot " + (playerIndex + 1) + " ramasse un item");
             }
+            actionExecuted = true;
+        } else if (newPos != null) {
+            System.out.println("Bot " + (playerIndex + 1) + " ne peut pas bouger vers " + newPos.getX() + "," + newPos.getY());
         }
+
+        return actionExecuted;
     }
 
-    private boolean isValidMove(Position pos) {
+    private boolean isValidMove(Position pos, int currentPlayerIndex) {
         // Vérifier les limites
         if (pos.getX() < 0 || pos.getY() < 0 || pos.getX() >= 15 || pos.getY() >= 15) {
+            System.out.println("Mouvement invalide: hors limites");
             return false;
         }
 
         // Vérifier les murs
         if (gameState.walls.contains(pos) || gameState.destructibleWalls.contains(pos)) {
+            System.out.println("Mouvement invalide: mur");
             return false;
         }
 
-        // Vérifier les autres joueurs
-        for (Player player : gameState.getPlayers()) {
-            if (player != null && player.getisAlive() && player.getPos().equals(pos)) {
+        // Vérifier les autres joueurs (exclure le joueur actuel)
+        for (int i = 0; i < gameState.getPlayers().length; i++) {
+            Player player = gameState.getPlayers()[i];
+            if (i != currentPlayerIndex && player != null && player.getisAlive() && player.getPos().equals(pos)) {
+                System.out.println("Mouvement invalide: collision avec joueur");
                 return false;
             }
         }
@@ -550,6 +625,7 @@ class BotManager {
         // Vérifier les bombes
         for (Bomb bomb : gameState.bombs) {
             if (bomb.getPos().equals(pos)) {
+                System.out.println("Mouvement invalide: bombe");
                 return false;
             }
         }
@@ -567,5 +643,7 @@ class BotManager {
         return allPlayers;
     }
 
-    public List<Bot> getBots() { return bots; }
+    public List<Bot> getBots() {
+        return bots;
+    }
 }

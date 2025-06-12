@@ -25,9 +25,7 @@ public class SoloModeController {
 
             // Récupérer le controller et l'initialiser
             BombermanController controller = loader.getController();
-            controller.initializeGame(false, 3);
-            boolean[] botConfig = {false, true, true, true}; // J1 humain, J2-J4 bots
-            controller.configureBots(botConfig);// Mode solo avec 3 bots
+            controller.initializeGame(false);
             controller.requestFocus();
 
         } catch (Exception e) {

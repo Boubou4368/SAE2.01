@@ -121,16 +121,22 @@ public class BombermanController implements Initializable {
         loadImages();
 
     }
-    public void initializeGame(boolean isMultiplayer, int numberOfBots) {
+    public void initializeGame(boolean isMultiplayer) {
         this.isMultiplayerMode = isMultiplayer;
 
 
         if (isMultiplayer) {
             gameState = new GameState(true, 0); // Multijoueur, pas de bots
+            boolean[] isBotArray = {false, false, false, false};
+            configureBots(isBotArray);
         } else {
-            gameState = new GameState(false, numberOfBots); // Solo avec bots
+            gameState = new GameState(false, 3); // Solo avec bots
+            boolean[] isBotArray = {false, true, true, true};
+            configureBots(isBotArray);
         }
-        botManager = new BotManager(gameState);
+        if (botManager == null) {
+            botManager = new BotManager(gameState);
+        }
 
         // Démarrer le jeu
         startGameLoop();
@@ -276,12 +282,13 @@ public class BombermanController implements Initializable {
 
         handleInput(currentTime);
 
-        // Après que les bots aient bougé
+        // Bot updates - ONLY CALL ONCE!
         if (botManager != null) {
             botManager.updateBots(currentTime);
         }
 
         // Détecter les changements de position et mettre à jour les images
+
         updateImagesBasedOnMovement();
 
         updateBombs();
@@ -1139,7 +1146,125 @@ public class BombermanController implements Initializable {
 
         return keyMappings;
     }
+    private void debugBotMovement() {
+        System.out.println("=== DEBUG BOT MOVEMENT ===");
 
+        for (int i = 0; i < 4; i++) {
+            Player player = gameState.getPlayers()[i];
+            if (player != null && player.isBot() && player.getisAlive()) {
+                System.out.println("Bot " + (i + 1) + ":");
+                System.out.println("  Position actuelle: (" + player.getPos().getX() + ", " + player.getPos().getY() + ")");
 
+                // Vérifier les mouvements possibles dans toutes les directions
+                Position currentPos = player.getPos();
+                Position[] directions = {
+                        new Position(currentPos.getX(), currentPos.getY() - 1), // UP
+                        new Position(currentPos.getX(), currentPos.getY() + 1), // DOWN
+                        new Position(currentPos.getX() - 1, currentPos.getY()), // LEFT
+                        new Position(currentPos.getX() + 1, currentPos.getY())  // RIGHT
+                };
+                String[] dirNames = {"UP", "DOWN", "LEFT", "RIGHT"};
+
+                for (int j = 0; j < directions.length; j++) {
+                    Position testPos = directions[j];
+                    boolean canMove = canMoveToWithoutPlayerCollision(testPos, i);
+                    System.out.println("  " + dirNames[j] + " (" + testPos.getX() + ", " + testPos.getY() + "): " +
+                            (canMove ? "LIBRE" : "BLOQUÉ"));
+
+                    if (!canMove) {
+                        // Détailler pourquoi c'est bloqué
+                        System.out.println("    Raisons du blocage:");
+
+                        // Vérifier les limites
+                        if (testPos.getX() < 0 || testPos.getX() >= GRID_SIZE ||
+                                testPos.getY() < 0 || testPos.getY() >= GRID_SIZE) {
+                            System.out.println("      - Hors limites de la grille");
+                        }
+
+                        // Vérifier les murs
+                        if (gameState.walls.contains(testPos)) {
+                            System.out.println("      - Mur indestructible");
+                        }
+
+                        if (gameState.destructibleWalls.contains(testPos)) {
+                            System.out.println("      - Mur destructible");
+                        }
+
+                        // Vérifier les bombes
+                        for (Bomb bomb : gameState.bombs) {
+                            if (bomb.getPos().equals(testPos)) {
+                                System.out.println("      - Bombe présente");
+                                break;
+                            }
+                        }
+
+                        // Vérifier les autres joueurs
+                        for (int k = 0; k < gameState.getPlayers().length; k++) {
+                            if (k != i) {
+                                Player otherPlayer = gameState.getPlayers()[k];
+                                if (otherPlayer.getisAlive() && testPos.equals(otherPlayer.getPos())) {
+                                    System.out.println("      - Autre joueur présent (Joueur " + (k + 1) + ")");
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Vérifier si le bot est complètement bloqué
+                boolean hasValidMove = false;
+                for (int j = 0; j < directions.length; j++) {
+                    if (canMoveToWithoutPlayerCollision(directions[j], i)) {
+                        hasValidMove = true;
+                        break;
+                    }
+                }
+
+                if (!hasValidMove) {
+                    System.out.println("  ⚠️  BOT COMPLÈTEMENT BLOQUÉ ⚠️");
+                }
+
+                System.out.println();
+            }
+        }
+        System.out.println("=== FIN DEBUG ===");
+    }
+    private void checkIfBotsAreStuck() {
+        for (int i = 0; i < 4; i++) {
+            Player player = gameState.getPlayers()[i];
+            if (player != null && player.isBot() && player.getisAlive()) {
+                Position currentPos = player.getPos();
+
+                // Vérifier si le bot n'a pas bougé depuis longtemps
+                if (previousPositions[i] != null &&
+                        currentPos.equals(previousPositions[i])) {
+
+                    // Le bot n'a pas bougé, vérifier s'il est bloqué
+                    boolean canMoveAnywhere = false;
+                    Position[] testDirections = {
+                            new Position(currentPos.getX(), currentPos.getY() - 1),
+                            new Position(currentPos.getX(), currentPos.getY() + 1),
+                            new Position(currentPos.getX() - 1, currentPos.getY()),
+                            new Position(currentPos.getX() + 1, currentPos.getY())
+                    };
+
+                    for (Position testPos : testDirections) {
+                        if (canMoveToWithoutPlayerCollision(testPos, i)) {
+                            canMoveAnywhere = true;
+                            break;
+                        }
+                    }
+
+                    if (!canMoveAnywhere) {
+                        System.out.println("⚠️ Bot " + (i + 1) + " est coincé à la position (" +
+                                currentPos.getX() + ", " + currentPos.getY() + ")");
+
+                        // Option: téléporter le bot vers une position libre
+                        // teleportBotToSafePosition(player, i);
+                    }
+                }
+            }
+        }
+    }
 
 }

@@ -115,6 +115,7 @@ public class BombermanController2 implements Initializable {
         updateUI();
     }
 
+
     private void loadImages() {
         try {
             brickImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/Images/brique.png"));
