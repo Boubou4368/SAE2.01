@@ -255,9 +255,8 @@ public class BombermanController implements Initializable {
 
         Position newPos = new Position(player.getPos().getX(), player.getPos().getY());
         boolean moved = false;
-
         Direction newDirection = Direction.IDLE;
-        KeyCode currentDirectionKey = null;
+        KeyCode pressedDirectionKey = null;
 
         // Contrôles spécifiques à chaque joueur
         switch (playerIndex) {
@@ -266,18 +265,22 @@ public class BombermanController implements Initializable {
                     newPos.setY(player.getPos().getY() - 1);
                     moved = true;
                     newDirection = Direction.UP;
+                    pressedDirectionKey = KeyCode.Z;
                 } else if (pressedKeys.contains(KeyCode.S)) {
                     newPos.setY(player.getPos().getY() + 1);
                     moved = true;
                     newDirection = Direction.DOWN;
+                    pressedDirectionKey = KeyCode.S;
                 } else if (pressedKeys.contains(KeyCode.Q)) {
                     newPos.setX(player.getPos().getX() - 1);
                     moved = true;
                     newDirection = Direction.LEFT;
+                    pressedDirectionKey = KeyCode.Q;
                 } else if (pressedKeys.contains(KeyCode.D)) {
                     newPos.setX(player.getPos().getX() + 1);
                     moved = true;
                     newDirection = Direction.RIGHT;
+                    pressedDirectionKey = KeyCode.D;
                 }
                 break;
 
@@ -286,18 +289,22 @@ public class BombermanController implements Initializable {
                     newPos.setY(player.getPos().getY() - 1);
                     moved = true;
                     newDirection = Direction.UP;
+                    pressedDirectionKey = KeyCode.UP;
                 } else if (pressedKeys.contains(KeyCode.DOWN)) {
                     newPos.setY(player.getPos().getY() + 1);
                     moved = true;
                     newDirection = Direction.DOWN;
+                    pressedDirectionKey = KeyCode.DOWN;
                 } else if (pressedKeys.contains(KeyCode.LEFT)) {
                     newPos.setX(player.getPos().getX() - 1);
                     moved = true;
                     newDirection = Direction.LEFT;
+                    pressedDirectionKey = KeyCode.LEFT;
                 } else if (pressedKeys.contains(KeyCode.RIGHT)) {
                     newPos.setX(player.getPos().getX() + 1);
                     moved = true;
                     newDirection = Direction.RIGHT;
+                    pressedDirectionKey = KeyCode.RIGHT;
                 }
                 break;
 
@@ -306,18 +313,22 @@ public class BombermanController implements Initializable {
                     newPos.setY(player.getPos().getY() - 1);
                     moved = true;
                     newDirection = Direction.UP;
+                    pressedDirectionKey = KeyCode.O;
                 } else if (pressedKeys.contains(KeyCode.L)) {
                     newPos.setY(player.getPos().getY() + 1);
                     moved = true;
                     newDirection = Direction.DOWN;
+                    pressedDirectionKey = KeyCode.L;
                 } else if (pressedKeys.contains(KeyCode.K)) {
                     newPos.setX(player.getPos().getX() - 1);
                     moved = true;
                     newDirection = Direction.LEFT;
+                    pressedDirectionKey = KeyCode.K;
                 } else if (pressedKeys.contains(KeyCode.M)) {
                     newPos.setX(player.getPos().getX() + 1);
                     moved = true;
                     newDirection = Direction.RIGHT;
+                    pressedDirectionKey = KeyCode.M;
                 }
                 break;
 
@@ -326,18 +337,22 @@ public class BombermanController implements Initializable {
                     newPos.setY(player.getPos().getY() - 1);
                     moved = true;
                     newDirection = Direction.UP;
+                    pressedDirectionKey = KeyCode.T;
                 } else if (pressedKeys.contains(KeyCode.G)) {
                     newPos.setY(player.getPos().getY() + 1);
                     moved = true;
                     newDirection = Direction.DOWN;
+                    pressedDirectionKey = KeyCode.G;
                 } else if (pressedKeys.contains(KeyCode.F)) {
                     newPos.setX(player.getPos().getX() - 1);
                     moved = true;
                     newDirection = Direction.LEFT;
+                    pressedDirectionKey = KeyCode.F;
                 } else if (pressedKeys.contains(KeyCode.H)) {
                     newPos.setX(player.getPos().getX() + 1);
                     moved = true;
                     newDirection = Direction.RIGHT;
+                    pressedDirectionKey = KeyCode.H;
                 }
                 break;
         }
@@ -345,19 +360,11 @@ public class BombermanController implements Initializable {
         if (moved && canMoveTo(newPos)) {
             player.setPos(newPos);
             updatePlayerImage(playerIndex, newDirection);
-
             lastMoveTimes[playerIndex] = currentTime;
-            soundManager.playSound("walk");
-
-            // Vérifier le kick de bombe après le mouvement réussi
-            if (player.getcanKick() && currentDirectionKey != null) {
-                tryKickBomb(player, currentDirectionKey);
-            } else if (moved && player.getcanKick() && currentDirectionKey != null) {
-                // Si le mouvement est bloqué mais que le joueur peut kicker,
-                // essayer de kicker une bombe dans cette direction
-                tryKickBomb(player, currentDirectionKey);
-            }
-            //soundManager.playSound(""); // Jouer le son de pas
+        } else if (moved && player.getcanKick() && pressedDirectionKey != null) {
+            // Si le mouvement est bloqué mais que le joueur peut kicker,
+            // essayer de kicker une bombe dans cette direction
+            tryKickBomb(player, pressedDirectionKey);
         }
 
         // Placement de bombes
@@ -435,7 +442,6 @@ public class BombermanController implements Initializable {
                 newImage = getCurrentPlayerImage(playerNumber);
                 if (newImage == null) newImage = playerImages[1]; // Default to DOWN
                 break;
-            }
         }
 
         setCurrentPlayerImage(playerNumber, newImage);
@@ -512,7 +518,7 @@ public class BombermanController implements Initializable {
 
         while (bombIterator.hasNext()) {
             Bomb bomb = bombIterator.next();
-            bomb.timer--;
+            //bomb.timer--;
 
             if (bomb instanceof KickingBomb) {
                 KickingBomb kickingBomb = (KickingBomb) bomb;
@@ -533,6 +539,7 @@ public class BombermanController implements Initializable {
                         gameState.bombs.add(stoppedBomb);
                         continue;
                     }
+                    soundManager.playSound("kick");
                 }
             }
 
@@ -595,15 +602,18 @@ public class BombermanController implements Initializable {
         Position kickDirection = getDirectionFromKey(direction);
         if (kickDirection == null) return;
 
-        Position bombPos = new Position(player.getPos().getX() + kickDirection.getX(), player.getPos().getY() + kickDirection.getY());
+        Position bombPos = new Position(
+                player.getPos().getX() + kickDirection.getX(),
+                player.getPos().getY() + kickDirection.getY()
+        );
 
         Bomb bombToKick = null;
         for (Bomb bomb : gameState.bombs) {
             if (bomb.getPos().equals(bombPos)) {
                 if (!(bomb instanceof KickingBomb)) {
                     bombToKick = bomb;
+                    break;
                 }
-                break;
             }
         }
 
@@ -612,20 +622,60 @@ public class BombermanController implements Initializable {
         }
     }
 
+    static class KickingBomb extends Bomb {
+        private Position direction;
+        private int kickSpeed = 8; // Plus le nombre est grand, plus c'est lent
+        private int kickTimer = 0;
+
+        KickingBomb(int x, int y, int owner, Position direction) {
+            super(x, y, owner);
+            this.direction = direction;
+        }
+
+        public Position getDirection() {
+            return direction;
+        }
+
+        boolean shouldMove() {
+            kickTimer++;
+            if (kickTimer >= kickSpeed) {
+                kickTimer = 0;
+                return true;
+            }
+            return false;
+        }
+    }
+
     private Position getDirectionFromKey(KeyCode key) {
         switch (key) {
+            // Joueur 1 (ZQSD)
             case Z:
+                // Joueur 2 (Flèches)
             case UP:
+                // Joueur 3 (OKLM)
+            case O:
+                // Joueur 4 (TFGH)
+            case T:
                 return new Position(0, -1);
+
             case S:
             case DOWN:
+            case L:
+            case G:
                 return new Position(0, 1);
+
             case Q:
             case LEFT:
+            case K:
+            case F:
                 return new Position(-1, 0);
+
             case D:
             case RIGHT:
+            case M:
+            case H:
                 return new Position(1, 0);
+
             default:
                 return null;
         }
@@ -636,8 +686,13 @@ public class BombermanController implements Initializable {
         gameState.bombs.remove(bomb);
 
         // Créer une nouvelle bombe qui bouge
-        KickingBomb kickingBomb = new KickingBomb(bomb.getPos().getX(), bomb.getPos().getY(), bomb.getOwner(), direction);
-        kickingBomb.setKickTimer(bomb.getTimer());
+        KickingBomb kickingBomb = new KickingBomb(
+                bomb.getPos().getX(),
+                bomb.getPos().getY(),
+                bomb.getOwner(),
+                direction
+        );
+        kickingBomb.setTimer(bomb.getTimer()); // Corriger ici - utiliser setTimer au lieu de setKickTimer
 
         gameState.bombs.add(kickingBomb);
     }
@@ -660,13 +715,13 @@ public class BombermanController implements Initializable {
 
         return true;
 
-        // LE SON D'EXPLOSION EST JOUÉ ICI
-        soundManager.playSound("explosion");
     }
 
     private void updateExplosions() {
         gameState.explosions.removeIf(explosion -> {
             explosion.timer--;
+            // LE SON D'EXPLOSION EST JOUÉ ICI
+            soundManager.playSound("explosion");
             return explosion.timer <= 0;
         });
     }
@@ -699,6 +754,7 @@ public class BombermanController implements Initializable {
                     } else {
                         respawnPlayer(player, i);
                     }
+                    soundManager.playSound("death");
                 }
             }
         }
@@ -736,15 +792,18 @@ public class BombermanController implements Initializable {
             case FEU:
                 player.setBombRange(player.getBombRange()+1);
                 player.setFeuBonusCount(player.getFeuBonusCount()+1);
+                soundManager.playSound("pickup");
                 break;
             case VITESSE:
                 player.setSpeedMultiplier(player.getSpeedMultiplier()+0.5);
                 player.setVitesseBonusCount(player.getVitesseBonusCount()+1);
+                soundManager.playSound("pickup");
                 break;
             case BOMBE:
                 player.setMaxBombs(player.getMaxBombs()+1);
                 player.setBombsRemaining(player.getBombsRemaining()+1);
                 player.setBombeBonusCount(player.getBombeBonusCount()+1);
+                soundManager.playSound("pickup");
                 break;
             case SKULL:
                 player.setLives(player.getLives()-1);
@@ -760,6 +819,7 @@ public class BombermanController implements Initializable {
                 if (player.getKickBonusCount() < 2) {
                     player.setKickBonusCount(player.getKickBonusCount()+1);
                     player.setcanKick(true);
+                    soundManager.playSound("pickup");
                 }
                 break;
         }
@@ -826,6 +886,7 @@ public class BombermanController implements Initializable {
         }
         if (winner > 0) {
             System.out.println("Joueur " + winner + " gagne !");
+            soundManager.playSound("win");
         } else {
             System.out.println("Match nul !");
         }
@@ -840,6 +901,7 @@ public class BombermanController implements Initializable {
         }
         soundManager.stopBackgroundMusic();
         System.out.println("Game Over: " + message);
+        soundManager.playSound("lose");
     }
 
     private boolean isPlayerAt(Position pos) {

@@ -74,7 +74,7 @@ public class SoundManager {
             if (soundName.equals("pickup")) {
                 player.setVolume(Math.min(1.0, volume * 1.5)); // 50% plus fort pour les items
             } else if (soundName.equals("explosion")) {
-                player.setVolume(Math.min(1.0, volume * 1.2)); // 20% plus fort pour les explosions
+                player.setVolume(Math.min(1.0, volume * 1.1)); // 10% plus fort pour les explosions
             } else if (soundName.equals("bomb_place")) {
                 player.setVolume(Math.min(1.0, volume * 1.7)); // 70% plus fort pour le placement de bombe
             } else if (soundName.equals("death")) {
