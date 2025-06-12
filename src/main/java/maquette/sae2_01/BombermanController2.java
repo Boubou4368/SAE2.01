@@ -115,80 +115,81 @@ public class BombermanController2 implements Initializable {
         updateUI();
     }
 
+
     private void loadImages() {
         try {
-            brickImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/brique.png"));
+            brickImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/Images/brique.png"));
         } catch (Exception e) {
             System.err.println("Erreur lors du chargement de l'image brique.png: " + e.getMessage());
         }
 
         try {
-            kickImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/kick.png"));
+            kickImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/Images/kick.png"));
         } catch (Exception e) {
             System.err.println("Erreur lors du chargement de l'image kick.png: " + e.getMessage());
         }
 
         try {
-            feuImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/feu.png"));
+            feuImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/Images/feu.png"));
         } catch (Exception e) {
             System.err.println("Erreur lors du chargement de l'image feu.png: " + e.getMessage());
         }
 
         try {
-            vitesseImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/vitesse.png"));
+            vitesseImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/Images/vitesse.png"));
         } catch (Exception e) {
             System.err.println("Erreur lors du chargement de l'image vitesse.png: " + e.getMessage());
         }
 
         try {
-            bombeImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/bombe.png"));
+            bombeImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/Images/bombe.png"));
         } catch (Exception e) {
             System.err.println("Erreur lors du chargement de l'image bombe.png: " + e.getMessage());
         }
 
         try {
-            skullImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/skull.png"));
+            skullImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/Images/skull.png"));
         } catch (Exception e) {
             System.err.println("Erreur lors du chargement de l'image skull.png: " + e.getMessage());
         }
 
         // Charger l'image d'explosion (GIF)
         try {
-            explosionGifImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/explosion.gif"));
+            explosionGifImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/Images/explosion.gif"));
         } catch (Exception e) {
             System.err.println("Erreur lors du chargement de l'image explosion.gif: " + e.getMessage());
         }
 
         try {
-            fireball = new Image(getClass().getResourceAsStream("/maquette/sae2_01/blast.png"));
+            fireball = new Image(getClass().getResourceAsStream("/maquette/sae2_01/Images/blast.png"));
         } catch (Exception e) {
             System.err.println("Erreur lors du chargement de l'image explosion.gif: " + e.getMessage());
         }
 
         try {
-            P1B = new Image(getClass().getResourceAsStream("/maquette/sae2_01/P1_bas.gif"));
+            P1B = new Image(getClass().getResourceAsStream("/maquette/sae2_01/Images/P1_bas.gif"));
         } catch (Exception e) {
             System.err.println("Erreur lors du chargement de l'image P1.gif: " + e.getMessage());
         }
         try {
-            P1H = new Image(getClass().getResourceAsStream("/maquette/sae2_01/P1_haut.gif"));
+            P1H = new Image(getClass().getResourceAsStream("/maquette/sae2_01/Images/P1_haut.gif"));
         } catch (Exception e) {
             System.err.println("Erreur lors du chargement de l'image P1.gif: " + e.getMessage());
         }
         try {
-            P1G = new Image(getClass().getResourceAsStream("/maquette/sae2_01/P1_gauche.gif"));
+            P1G = new Image(getClass().getResourceAsStream("/maquette/sae2_01/Images/P1_gauche.gif"));
         } catch (Exception e) {
             System.err.println("Erreur lors du chargement de l'image P1.gif: " + e.getMessage());
         }
         try {
-            P1D = new Image(getClass().getResourceAsStream("/maquette/sae2_01/P1_droite.gif"));
+            P1D = new Image(getClass().getResourceAsStream("/maquette/sae2_01/Images/P1_droite.gif"));
         } catch (Exception e) {
             System.err.println("Erreur lors du chargement de l'image P1.gif: " + e.getMessage());
         }
 
         // Charger l'image de base du drapeau
         try {
-            Image baseFlag = new Image(getClass().getResourceAsStream("/maquette/sae2_01/drapeau.png"));
+            Image baseFlag = new Image(getClass().getResourceAsStream("/maquette/sae2_01/Images/drapeau.png"));
             if (baseFlag == null) {
                 System.err.println("Le fichier drapeau.png est introuvable.");}
             // Créer les versions colorées (tu devras implémenter une méthode pour changer les couleurs)
@@ -201,7 +202,7 @@ public class BombermanController2 implements Initializable {
         }
 
         try {
-            iconeImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/icone.png"));
+            iconeImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/Images/icone.png"));
             if (livesIcon != null) {
                 livesIcon.setImage(iconeImage);
             }
@@ -209,7 +210,7 @@ public class BombermanController2 implements Initializable {
             System.err.println("Erreur lors du chargement de l'image icone.png: " + e.getMessage());
         }
         try {
-            iconeImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/icone2.png"));
+            iconeImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/Images/icone2.png"));
             if (livesIcon2 != null) {
                 livesIcon2.setImage(iconeImage);
             }
@@ -217,7 +218,7 @@ public class BombermanController2 implements Initializable {
             System.err.println("Erreur lors du chargement de l'image icone2.png: " + e.getMessage());
         }
         try {
-            iconeImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/titre.png"));
+            iconeImage = new Image(getClass().getResourceAsStream("/maquette/sae2_01/Images/titre.png"));
             if (titre != null) {
                 titre.setImage(iconeImage);
             }
