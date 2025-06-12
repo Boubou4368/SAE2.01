@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.image.ImageView?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="maquette.sae2_01.EditeurController"
+            xmlns="http://javafx.com/javafx/8.0.171" stylesheets="@editeur.css">
+    <top>
+        <VBox spacing="10">
+        <HBox spacing="10" alignment="CENTER">
+            <children>
+                <Label text="Éditeur de Niveaux" styleClass="title"/>
+            </children>
+        </HBox>
+            <VBox spacing="20">
+                <HBox alignment="CENTER">
+                    <Label text="Outils de placement" styleClass="subtitle"/>
+                </HBox>
+                <HBox alignment="CENTER">
+                    <RadioButton text="Mur indestructible" fx:id="btnIndestructible" />
+                    <RadioButton text="Mur destructible" fx:id="btnDestructible" />
+                </HBox>
+                <HBox alignment="CENTER">
+                    <RadioButton text="Feu" fx:id="btnFeu" />
+                    <RadioButton text="Bombe" fx:id="btnBombe" />
+                    <RadioButton text="Vitesse" fx:id="btnVitesse" />
+                    <RadioButton text="Kick" fx:id="btnKick" />
+                    <RadioButton text="Skull" fx:id="btnSkull" />
+                </HBox>
+                <HBox alignment="CENTER">
+                    <RadioButton text="Joueur 1" fx:id="btnPlayer1" />
+                    <RadioButton text="Joueur 2" fx:id="btnPlayer2" />
+                    <RadioButton text="Joueur 3" fx:id="btnPlayer3" />
+                    <RadioButton text="Joueur 4" fx:id="btnPlayer4" />
+                </HBox>
+                <HBox alignment="CENTER">
+                    <RadioButton text="Drapeau 1" fx:id="btnFlag1" />
+                    <RadioButton text="Drapeau 2" fx:id="btnFlag2"/>
+                    <RadioButton text="Drapeau 3" fx:id="btnFlag3" />
+                    <RadioButton text="Drapeau 4" fx:id="btnFlag4" />
+                </HBox>
+            </VBox>
+        </VBox>
+    </top>
+    <center>
+        <GridPane fx:id="gridPane" hgap="1" vgap="1" alignment="CENTER"/>
+    </center>
+    <right>
+    </right>
+    <bottom>
+        <HBox>
+            <Button text="Sauvegarder" fx:id="saveButton" onAction="#handleSave"/>
+            <Button text="Quitter" fx:id="quit" onAction="#onQuit"/>
+        </HBox>
+    </bottom>
+</BorderPane>

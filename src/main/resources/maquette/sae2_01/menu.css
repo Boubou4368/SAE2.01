@@ -13,10 +13,12 @@
     -fx-font-family: VT323;
 }
 .fond-stackpane {
-    -fx-background-color: green;
-    -fx-background-size: cover;
+    -fx-background-image: url("start.png");
     -fx-background-repeat: no-repeat;
+    -fx-background-size: cover;
+    -fx-background-position: center;
 }
+
 .menu-vbox {
     -fx-alignment: center;
 }

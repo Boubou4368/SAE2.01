@@ -1,0 +1,30 @@
+.title {
+    -fx-font-size: 24px;
+    -fx-text-fill: #ff6b35;
+    -fx-font-weight: bold;
+}
+
+.subtitle {
+    -fx-font-size: 16px;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.root {
+    -fx-background-color: #1a1a1a;
+}
+
+
+
+.button {
+    -fx-background-color: #ff6b35;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.radio-button {
+    -fx-text-fill: #ff6b35;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(255,107,53,0.5), 3, 0, 0, 0);
+}

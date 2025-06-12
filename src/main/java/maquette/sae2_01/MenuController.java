@@ -45,6 +45,27 @@ public class MenuController {
     }
 
     @FXML
+    private void onEditeur(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("editeur.fxml"));
+            Scene gameScene = new Scene(loader.load());
+
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(gameScene);
+            stage.setTitle("Editeur de niveau");
+            stage.setWidth(1000);
+            stage.setHeight(1000);
+            stage.show();
+
+            // Donne le focus au canvas pour les touches clavier
+            EditeurController controller = loader.getController();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
     private void onParametre(ActionEvent event) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("parametre.fxml"));

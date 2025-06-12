@@ -188,9 +188,9 @@ public class BombermanController2 implements Initializable {
 
         // Charger l'image de base du drapeau
         try {
-            Image baseFlag = new Image(getClass().getResourceAsStream("/maquette/sae2_01/drapeau.png"));
+            Image baseFlag = new Image(getClass().getResourceAsStream("/maquette/sae2_01/drapeau2.png"));
             if (baseFlag == null) {
-                System.err.println("Le fichier drapeau.png est introuvable.");}
+                System.err.println("Le fichier drapeau2.png est introuvable.");}
             // Créer les versions colorées (tu devras implémenter une méthode pour changer les couleurs)
             drapeauBlancImage = createColoredFlag(baseFlag, Color.WHITE);
             drapeauNoirImage = baseFlag; // Garder l'original noir
