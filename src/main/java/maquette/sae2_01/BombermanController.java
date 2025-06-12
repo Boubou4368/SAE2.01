@@ -374,8 +374,13 @@ public class BombermanController implements Initializable {
             updatePlayerImage(playerIndex, newDirection);
             lastMoveTimes[playerIndex] = currentTime;
             soundManager.playSound("walk");
+        } else if (moved && player.getcanKick() && pressedDirectionKey != null) {
+            // Si le mouvement est bloqué mais que le joueur peut kicker,
+            // essayer de kicker une bombe dans cette direction
+            tryKickBomb(player, pressedDirectionKey);
         }
 
+        // Placement de bombes
         checkBombPlacement(player, playerIndex);
     }
 
@@ -554,6 +559,7 @@ public class BombermanController implements Initializable {
                         gameState.bombs.add(stoppedBomb);
                         continue;
                     }
+                    soundManager.playSound("kick");
                 }
             }
 
@@ -633,6 +639,30 @@ public class BombermanController implements Initializable {
         }
     }
 
+    static class KickingBomb extends Bomb {
+        private Position direction;
+        private int kickSpeed = 8; // Plus le nombre est grand, plus c'est lent
+        private int kickTimer = 0;
+
+        KickingBomb(int x, int y, int owner, Position direction) {
+            super(x, y, owner);
+            this.direction = direction;
+        }
+
+        public Position getDirection() {
+            return direction;
+        }
+
+        boolean shouldMove() {
+            kickTimer++;
+            if (kickTimer >= kickSpeed) {
+                kickTimer = 0;
+                return true;
+            }
+            return false;
+        }
+    }
+
     private Position getDirectionFromKey(KeyCode key) {
         switch (key) {
             case Z:
@@ -657,8 +687,13 @@ public class BombermanController implements Initializable {
         gameState.bombs.remove(bomb);
 
         // Créer une nouvelle bombe qui bouge
-        KickingBomb kickingBomb = new KickingBomb(bomb.getPos().getX(), bomb.getPos().getY(), bomb.getOwner(), direction);
-        kickingBomb.setKickTimer(bomb.getTimer());
+        KickingBomb kickingBomb = new KickingBomb(
+                bomb.getPos().getX(),
+                bomb.getPos().getY(),
+                bomb.getOwner(),
+                direction
+        );
+        kickingBomb.setTimer(bomb.getTimer()); // Corriger ici - utiliser setTimer au lieu de setKickTimer
 
         gameState.bombs.add(kickingBomb);
     }
@@ -685,6 +720,8 @@ public class BombermanController implements Initializable {
     private void updateExplosions() {
         gameState.explosions.removeIf(explosion -> {
             explosion.timer--;
+            // LE SON D'EXPLOSION EST JOUÉ ICI
+            soundManager.playSound("explosion");
             return explosion.timer <= 0;
         });
     }
@@ -733,6 +770,7 @@ public class BombermanController implements Initializable {
 
                         System.out.println("Joueur " + (i + 1) + " a perdu une vie. Vies restantes: " + player.getLives());
                     }
+                    soundManager.playSound("death");
 
                     // Important : sortir de la boucle pour éviter les multiples hits
                     break;
@@ -774,15 +812,18 @@ public class BombermanController implements Initializable {
             case FEU:
                 player.setBombRange(player.getBombRange()+1);
                 player.setFeuBonusCount(player.getFeuBonusCount()+1);
+                soundManager.playSound("pickup");
                 break;
             case VITESSE:
                 player.setSpeedMultiplier(player.getSpeedMultiplier()+0.5);
                 player.setVitesseBonusCount(player.getVitesseBonusCount()+1);
+                soundManager.playSound("pickup");
                 break;
             case BOMBE:
                 player.setMaxBombs(player.getMaxBombs()+1);
                 player.setBombsRemaining(player.getBombsRemaining()+1);
                 player.setBombeBonusCount(player.getBombeBonusCount()+1);
+                soundManager.playSound("pickup");
                 break;
             case SKULL:
                 player.setLives(player.getLives()-1);
@@ -798,6 +839,7 @@ public class BombermanController implements Initializable {
                 if (player.getKickBonusCount() < 2) {
                     player.setKickBonusCount(player.getKickBonusCount()+1);
                     player.setcanKick(true);
+                    soundManager.playSound("pickup");
                 }
                 break;
         }
@@ -864,6 +906,7 @@ public class BombermanController implements Initializable {
         }
         if (winner > 0) {
             System.out.println("Joueur " + winner + " gagne !");
+            soundManager.playSound("win");
         } else {
             System.out.println("Match nul !");
         }
@@ -878,6 +921,7 @@ public class BombermanController implements Initializable {
         }
         soundManager.stopBackgroundMusic();
         System.out.println("Game Over: " + message);
+        soundManager.playSound("lose");
     }
 
     private boolean isPlayerAt(Position pos) {
@@ -965,6 +1009,9 @@ public class BombermanController implements Initializable {
                 case SKULL:
                     itemImage = skullImage;
                     break;
+                case KICK:
+                    itemImage = kickImage;
+                    break;
             }
 
             if (itemImage != null) {
@@ -983,6 +1030,9 @@ public class BombermanController implements Initializable {
                         break;
                     case SKULL:
                         gc.setFill(Color.web("#8B008B"));
+                        break;
+                    case KICK:
+                        gc.setFill(Color.web("#FFD700"));
                         break;
                 }
                 gc.fillOval(pos.getX() * CELL_SIZE + 8, pos.getY() * CELL_SIZE + 8, CELL_SIZE - 16, CELL_SIZE - 16);
