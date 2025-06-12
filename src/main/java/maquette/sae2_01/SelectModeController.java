@@ -7,7 +7,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-public class SoloModeController {
+public class SelectModeController {
 
 
     @FXML
@@ -26,6 +26,28 @@ public class SoloModeController {
             // Récupérer le controller et l'initialiser
             BombermanController controller = loader.getController();
             controller.initializeGame(false);
+            controller.requestFocus();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    @FXML
+    private void onNormalMulti(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("bomberman.fxml"));
+            Scene gameScene = new Scene(loader.load());
+
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(gameScene);
+            stage.setTitle("Bomberman");
+            stage.setWidth(1000);
+            stage.setHeight(1000);
+            stage.show();
+
+            // Récupérer le controller et l'initialiser
+            BombermanController controller = loader.getController();
+            controller.initializeGame(true);
             controller.requestFocus();
 
         } catch (Exception e) {
