@@ -345,6 +345,7 @@ public class BombermanController implements Initializable {
 
         Position newPos = new Position(player.getPos().getX(), player.getPos().getY());
         boolean moved = false;
+        KeyCode pressedDirectionKey = null;
 
         Direction newDirection = Direction.IDLE;
         KeyMapping mapping = keyMappings.get(playerIndex);
@@ -354,18 +355,22 @@ public class BombermanController implements Initializable {
                 newPos.setY(player.getPos().getY() - 1);
                 moved = true;
                 newDirection = Direction.UP;
+                pressedDirectionKey = KeyCode.Z;
             } else if (mapping.down != null && pressedKeys.contains(mapping.down)) {
                 newPos.setY(player.getPos().getY() + 1);
                 moved = true;
                 newDirection = Direction.DOWN;
+                pressedDirectionKey = KeyCode.S;
             } else if (mapping.left != null && pressedKeys.contains(mapping.left)) {
                 newPos.setX(player.getPos().getX() - 1);
                 moved = true;
                 newDirection = Direction.LEFT;
+                pressedDirectionKey = KeyCode.Q;
             } else if (mapping.right != null && pressedKeys.contains(mapping.right)) {
                 newPos.setX(player.getPos().getX() + 1);
                 moved = true;
                 newDirection = Direction.RIGHT;
+                pressedDirectionKey = KeyCode.D;
             }
         }
 
@@ -373,7 +378,6 @@ public class BombermanController implements Initializable {
             player.setPos(newPos);
             updatePlayerImage(playerIndex, newDirection);
             lastMoveTimes[playerIndex] = currentTime;
-            soundManager.playSound("walk");
         } else if (moved && player.getcanKick() && pressedDirectionKey != null) {
             // Si le mouvement est bloqué mais que le joueur peut kicker,
             // essayer de kicker une bombe dans cette direction
@@ -613,7 +617,7 @@ public class BombermanController implements Initializable {
                 }
             }
         }
-        //soundManager.playSound("explosion"); // Jouer le son d'explosion
+        soundManager.playSound("explosion");
     }
 
     private void tryKickBomb(Player player, KeyCode direction) {
@@ -721,7 +725,6 @@ public class BombermanController implements Initializable {
         gameState.explosions.removeIf(explosion -> {
             explosion.timer--;
             // LE SON D'EXPLOSION EST JOUÉ ICI
-            soundManager.playSound("explosion");
             return explosion.timer <= 0;
         });
     }
