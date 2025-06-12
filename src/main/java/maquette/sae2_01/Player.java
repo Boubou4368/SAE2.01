@@ -20,6 +20,10 @@ public class Player {
     // Nouvelles variables pour l'invincibilité
     private boolean isInvulnerable = false;
     private long invulnerabilityEndTime = 0;
+    private boolean isBlinking = false;
+    private long blinkStartTime = 0;
+    private long blinkEndTime = 0;
+    private boolean isVisible = true;
 
     public Player(int x, int y) { this.pos = new Position(x, y); }
 
@@ -66,14 +70,17 @@ public class Player {
     public Position getPos() {
         return pos;
     }
+
     public void setPos(Position pos) {
         this.pos = pos;
     }
+
     public int getLives() { return lives; }
     public void setLives(int lives) { this.lives = lives; }
 
     public boolean getcanKick() { return canKick; }
     public void setcanKick(boolean canKick) { this.canKick = canKick; }
+
     public int getBombsRemaining(){
         return bombsRemaining;
     }
@@ -140,6 +147,18 @@ public class Player {
     public void setInvulnerabilityEndTime(long invulnerabilityEndTime) {
         this.invulnerabilityEndTime = invulnerabilityEndTime;
     }
+
+    public boolean isBlinking() { return isBlinking; }
+    public void setBlinking(boolean blinking) { this.isBlinking = blinking; }
+
+    public long getBlinkStartTime() { return blinkStartTime; }
+    public void setBlinkStartTime(long blinkStartTime) { this.blinkStartTime = blinkStartTime; }
+
+    public long getBlinkEndTime() { return blinkEndTime; }
+    public void setBlinkEndTime(long blinkEndTime) { this.blinkEndTime = blinkEndTime; }
+
+    public boolean isVisible() { return isVisible; }
+    public void setVisible(boolean visible) { this.isVisible = visible; }
 
     @Override
     public String toString() {
