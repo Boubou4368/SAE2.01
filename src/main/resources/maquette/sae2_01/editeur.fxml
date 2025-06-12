@@ -22,7 +22,7 @@
                     <RadioButton text="Mur indestructible" fx:id="btnIndestructible" />
                     <RadioButton text="Mur destructible" fx:id="btnDestructible" />
                 </HBox>
-                <HBox alignment="CENTER">
+                <HBox alignment="CENTER" styleClass="petitEditeur">
                     <RadioButton text="Feu" fx:id="btnFeu" />
                     <RadioButton text="Bombe" fx:id="btnBombe" />
                     <RadioButton text="Vitesse" fx:id="btnVitesse" />
