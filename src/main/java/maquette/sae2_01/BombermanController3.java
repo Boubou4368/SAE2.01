@@ -16,12 +16,15 @@ import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
-public class BombermanController implements Initializable {
+public class BombermanController3 implements Initializable {
     @FXML
     private Canvas gameCanvas;
     @FXML
@@ -70,13 +73,10 @@ public class BombermanController implements Initializable {
     private Timeline gameTimer;
     private Integer startTimeInSeconds = 180; // 3 minutes = 180 secondes
     private GraphicsContext gc;
-    private GameState gameState;
-    private BotManager botManager ;
-    private boolean isMultiplayerMode;
+    private GameStateCustom GameStateCustom;
     private Set<KeyCode> pressedKeys = new HashSet<>();
     private AnimationTimer gameLoop;
     private long[] lastMoveTimes = new long[4];
-    private Position[] previousPositions = new Position[4];
 
     private SoundManager soundManager; // Ajout du SoundManager
 
@@ -114,31 +114,13 @@ public class BombermanController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         gc = gameCanvas.getGraphicsContext2D();
+        GameStateCustom = new GameStateCustom();
 
         gameCanvas.setFocusTraversable(true);
         soundManager = SoundManager.getInstance();
         soundManager.startBackgroundMusic();
         loadImages();
 
-    }
-    public void initializeGame(boolean isMultiplayer) {
-        this.isMultiplayerMode = isMultiplayer;
-
-
-        if (isMultiplayer) {
-            gameState = new GameState(true, 0); // Multijoueur, pas de bots
-            boolean[] isBotArray = {false, false, false, false};
-            configureBots(isBotArray);
-        } else {
-            gameState = new GameState(false, 3); // Solo avec bots
-            boolean[] isBotArray = {false, true, true, true};
-            configureBots(isBotArray);
-        }
-        if (botManager == null) {
-            botManager = new BotManager(gameState);
-        }
-
-        // Démarrer le jeu
         startGameLoop();
         startGameTimer();
         updateUI();
@@ -193,11 +175,11 @@ public class BombermanController implements Initializable {
     }
 
     private void loadPlayerIcons() {
-        String[] iconFiles = {"Images/icone.png", "Images/icone2.png", "Images/icone3.png", "Images/icone4.png"};
+        String[] iconFiles = {"icone.png", "icone2.png", "icone3.png", "icone4.png"};
         ImageView[] icons = {livesIcon, livesIcon2, livesIcon3, livesIcon4};
 
         for (int i = 0; i < iconFiles.length; i++) {
-            iconeImage = loadImage("/maquette/sae2_01/" + iconFiles[i]);
+            iconeImage = loadImage("/maquette/sae2_01/Images/" + iconFiles[i]);
             if (icons[i] != null && iconeImage != null) {
                 icons[i].setImage(iconeImage);
             }
@@ -252,102 +234,37 @@ public class BombermanController implements Initializable {
         gameLoop.start();
     }
 
-    public void configureBots(boolean[] isBotArray) {
-        // Vérifier que gameState existe
-        if (gameState == null) {
-            System.err.println("Erreur: gameState n'est pas initialisé. Appelez initializeGame() d'abord.");
-            return;
-        }
-
-        // isBotArray[i] = true si le joueur i+1 est un bot
-        for (int i = 0; i < Math.min(isBotArray.length, 4); i++) {
-            if (gameState.getPlayers()[i] != null) {
-                gameState.getPlayers()[i].setBot(isBotArray[i]);
-            }
-        }
-
-        // Recréer le BotManager avec la nouvelle configuration
-        botManager = new BotManager(gameState);
-    }
-
-
     private void update(long currentTime) {
-        // Sauvegarder les positions actuelles
-        for (int i = 0; i < 4; i++) {
-            if (previousPositions[i] == null) {
-                previousPositions[i] = new Position(gameState.getPlayers()[i].getPos().getX(),
-                        gameState.getPlayers()[i].getPos().getY());
-            }
-        }
-
         handleInput(currentTime);
-
-        // Bot updates - ONLY CALL ONCE!
-        if (botManager != null) {
-            botManager.updateBots(currentTime);
-        }
-
-        // Détecter les changements de position et mettre à jour les images
-
-        updateImagesBasedOnMovement();
-
         updateBombs();
         updateExplosions();
         checkPlayersHit();
         checkItemPickup();
     }
 
-    private void updateImagesBasedOnMovement() {
-        for (int i = 0; i < 4; i++) {
-            Player player = gameState.getPlayers()[i];
-            if (player.getisAlive() && player.isBot()) {
-                Position currentPos = player.getPos();
-                Position prevPos = previousPositions[i];
-
-                if (!currentPos.equals(prevPos)) {
-                    Direction direction = getDirectionFromPositions(prevPos, currentPos);
-                    updatePlayerImage(i, direction);
-
-                    // Mettre à jour la position précédente
-                    previousPositions[i] = new Position(currentPos.getX(), currentPos.getY());
-                }
-            }
-        }
-    }
-
-
     private void handleInput(long currentTime) {
         for (int i = 0; i < 4; i++) {
-            Player player = gameState.getPlayers()[i];
-
-            if (!player.getisAlive()) continue; // Ignorer les joueurs morts
-
-            if (player.isBot()) {
-                // Les bots sont gérés par le BotManager dans update()
-                // Mais on peut ajouter une vérification ici si nécessaire
-                continue;
-            } else {
-                // Gérer l'input du joueur humain
-                handlePlayerInput(currentTime, player, i);
-            }
+            handlePlayerInput(currentTime, GameStateCustom.players[i], i);
         }
     }
 
     private void handlePlayerInput(long currentTime, Player player, int playerIndex) {
-        if (!player.getisAlive()) return;
+        if (!player.getisAlive() || player == null) return;
 
         long lastMoveTime = lastMoveTimes[playerIndex];
 
+        // Vérifier si assez de temps s'est écoulé depuis le dernier mouvement
         if (currentTime - lastMoveTime < MOVE_DELAY_NS) {
+            // On peut quand même placer des bombes même si on ne peut pas bouger
             checkBombPlacement(player, playerIndex);
             return;
         }
 
         Position newPos = new Position(player.getPos().getX(), player.getPos().getY());
         boolean moved = false;
-        KeyCode pressedDirectionKey = null;
 
         Direction newDirection = Direction.IDLE;
+        KeyCode currentDirectionKey = null;
         KeyMapping mapping = keyMappings.get(playerIndex);
 
         if (mapping != null) {
@@ -355,33 +272,124 @@ public class BombermanController implements Initializable {
                 newPos.setY(player.getPos().getY() - 1);
                 moved = true;
                 newDirection = Direction.UP;
-                pressedDirectionKey = KeyCode.Z;
             } else if (mapping.down != null && pressedKeys.contains(mapping.down)) {
                 newPos.setY(player.getPos().getY() + 1);
                 moved = true;
                 newDirection = Direction.DOWN;
-                pressedDirectionKey = KeyCode.S;
             } else if (mapping.left != null && pressedKeys.contains(mapping.left)) {
                 newPos.setX(player.getPos().getX() - 1);
                 moved = true;
                 newDirection = Direction.LEFT;
-                pressedDirectionKey = KeyCode.Q;
             } else if (mapping.right != null && pressedKeys.contains(mapping.right)) {
                 newPos.setX(player.getPos().getX() + 1);
                 moved = true;
                 newDirection = Direction.RIGHT;
-                pressedDirectionKey = KeyCode.D;
             }
         }
 
-        if (moved && canMoveToWithoutPlayerCollision(newPos, playerIndex)) {
+
+        /*// Contrôles spécifiques à chaque joueur
+        switch (playerIndex) {
+            case 0: // Joueur 1 : ZQSD
+                KeyMapping mapping = keyMappings.get(playerIndex);
+
+                if (mapping != null) {
+                    if (mapping.up != null && pressedKeys.contains(mapping.up)) {
+                        newPos.setY(player.getPos().getY() - 1);
+                        moved = true;
+                        newDirection = Direction.UP;
+                    } else if (mapping.down != null && pressedKeys.contains(mapping.down)) {
+                        newPos.setY(player.getPos().getY() + 1);
+                        moved = true;
+                        newDirection = Direction.DOWN;
+                    } else if (mapping.left != null && pressedKeys.contains(mapping.left)) {
+                        newPos.setX(player.getPos().getX() - 1);
+                        moved = true;
+                        newDirection = Direction.LEFT;
+                    } else if (mapping.right != null && pressedKeys.contains(mapping.right)) {
+                        newPos.setX(player.getPos().getX() + 1);
+                        moved = true;
+                        newDirection = Direction.RIGHT;
+                    }
+                }
+
+
+            case 1: // Joueur 2 : Flèches
+                if (pressedKeys.contains(KeyCode.I)) {
+                    newPos.setY(player.getPos().getY() - 1);
+                    moved = true;
+                    newDirection = Direction.UP;
+                } else if (pressedKeys.contains(KeyCode.DOWN)) {
+                    newPos.setY(player.getPos().getY() + 1);
+                    moved = true;
+                    newDirection = Direction.DOWN;
+                } else if (pressedKeys.contains(KeyCode.LEFT)) {
+                    newPos.setX(player.getPos().getX() - 1);
+                    moved = true;
+                    newDirection = Direction.LEFT;
+                } else if (pressedKeys.contains(KeyCode.RIGHT)) {
+                    newPos.setX(player.getPos().getX() + 1);
+                    moved = true;
+                    newDirection = Direction.RIGHT;
+                }
+                break;
+
+            case 2: // Joueur 3 : OKLM
+                if (pressedKeys.contains(KeyCode.O)) {
+                    newPos.setY(player.getPos().getY() - 1);
+                    moved = true;
+                    newDirection = Direction.UP;
+                } else if (pressedKeys.contains(KeyCode.L)) {
+                    newPos.setY(player.getPos().getY() + 1);
+                    moved = true;
+                    newDirection = Direction.DOWN;
+                } else if (pressedKeys.contains(KeyCode.K)) {
+                    newPos.setX(player.getPos().getX() - 1);
+                    moved = true;
+                    newDirection = Direction.LEFT;
+                } else if (pressedKeys.contains(KeyCode.M)) {
+                    newPos.setX(player.getPos().getX() + 1);
+                    moved = true;
+                    newDirection = Direction.RIGHT;
+                }
+                break;
+
+            case 3: // Joueur 4 : TFGH
+                if (pressedKeys.contains(KeyCode.T)) {
+                    newPos.setY(player.getPos().getY() - 1);
+                    moved = true;
+                    newDirection = Direction.UP;
+                } else if (pressedKeys.contains(KeyCode.G)) {
+                    newPos.setY(player.getPos().getY() + 1);
+                    moved = true;
+                    newDirection = Direction.DOWN;
+                } else if (pressedKeys.contains(KeyCode.F)) {
+                    newPos.setX(player.getPos().getX() - 1);
+                    moved = true;
+                    newDirection = Direction.LEFT;
+                } else if (pressedKeys.contains(KeyCode.H)) {
+                    newPos.setX(player.getPos().getX() + 1);
+                    moved = true;
+                    newDirection = Direction.RIGHT;
+                }
+                break;
+        }*/
+
+        if (moved && canMoveTo(newPos)) {
             player.setPos(newPos);
             updatePlayerImage(playerIndex, newDirection);
+
             lastMoveTimes[playerIndex] = currentTime;
-        } else if (moved && player.getcanKick() && pressedDirectionKey != null) {
-            // Si le mouvement est bloqué mais que le joueur peut kicker,
-            // essayer de kicker une bombe dans cette direction
-            tryKickBomb(player, pressedDirectionKey);
+            soundManager.playSound("walk");
+
+            // Vérifier le kick de bombe après le mouvement réussi
+            if (player.getcanKick() && currentDirectionKey != null) {
+                tryKickBomb(player, currentDirectionKey);
+            } else if (moved && player.getcanKick() && currentDirectionKey != null) {
+                // Si le mouvement est bloqué mais que le joueur peut kicker,
+                // essayer de kicker une bombe dans cette direction
+                tryKickBomb(player, currentDirectionKey);
+            }
         }
 
         // Placement de bombes
@@ -390,6 +398,21 @@ public class BombermanController implements Initializable {
 
     private void checkBombPlacement(Player player, int playerIndex) {
         KeyCode bombKey = keyMappings.get(playerIndex).bomb;
+/*
+        switch (playerIndex) {
+            case 0:
+                bombKey = keyMappings.get(playerIndex).bomb;
+                break;
+            case 1:
+                bombKey = KeyCode.ENTER;
+                break;
+            case 2:
+                bombKey = KeyCode.P;
+                break;
+            case 3:
+                bombKey = KeyCode.Y;
+                break;
+        }*/
 
         if (pressedKeys.contains(bombKey) && player.getBombsRemaining() > 0) {
             placeBomb(player, playerIndex + 1);
@@ -402,30 +425,20 @@ public class BombermanController implements Initializable {
             return false;
         }
 
-        if (gameState.walls.contains(pos) || gameState.destructibleWalls.contains(pos)) {
+        if (GameStateCustom.walls.contains(pos) || GameStateCustom.destructibleWalls.contains(pos)) {
             return false;
         }
 
-        for (Bomb bomb : gameState.bombs) {
+        for (Bomb bomb : GameStateCustom.bombs) {
             if (bomb.getPos().equals(pos)) {
                 return false;
             }
         }
 
-        return true;
-    }
-    private boolean canMoveToWithoutPlayerCollision(Position pos, int currentPlayerIndex) {
-        if (!canMoveTo(pos)) {
-            return false;
-        }
-
-        // Vérifier les collisions avec les autres joueurs (pas soi-même)
-        for (int i = 0; i < gameState.getPlayers().length; i++) {
-            if (i != currentPlayerIndex) { // ← Important : ne pas se vérifier soi-même
-                Player otherPlayer = gameState.getPlayers()[i];
-                if (otherPlayer.getisAlive() && pos.equals(otherPlayer.getPos())) {
-                    return false;
-                }
+        // Vérifier que les joueurs ne se chevauchent pas
+        for (Player player : GameStateCustom.players) {
+            if (player.getisAlive() && pos.equals(player.getPos())) {
+                return false;
             }
         }
 
@@ -457,19 +470,6 @@ public class BombermanController implements Initializable {
         }
 
         setCurrentPlayerImage(playerNumber, newImage);
-    }
-
-
-
-    private Direction getDirectionFromPositions(Position from, Position to) {
-        int dx = to.getX() - from.getX();
-        int dy = to.getY() - from.getY();
-
-        if (dx > 0) return Direction.RIGHT;
-        if (dx < 0) return Direction.LEFT;
-        if (dy > 0) return Direction.DOWN;
-        if (dy < 0) return Direction.UP;
-        return Direction.IDLE;
     }
 
     private Image[] getPlayerImageArray(int playerNumber) {
@@ -526,20 +526,20 @@ public class BombermanController implements Initializable {
     private void placeBomb(Player player, int playerNumber) {
         Position bombPos = new Position(player.getPos().getX(), player.getPos().getY());
 
-        for (Bomb bomb : gameState.bombs) {
+        for (Bomb bomb : GameStateCustom.bombs) {
             if (bomb.getPos().equals(bombPos)) {
                 return;
             }
         }
 
 
-        gameState.bombs.add(new Bomb(bombPos.getX(), bombPos.getY(), playerNumber));
+        GameStateCustom.bombs.add(new Bomb(bombPos.getX(), bombPos.getY(), playerNumber));
         player.setBombsRemaining(player.getBombsRemaining() - 1);
         soundManager.playSound("bomb_place"); // Jouer le son de placement de bombe
     }
 
     private void updateBombs() {
-        Iterator<Bomb> bombIterator = gameState.bombs.iterator();
+        Iterator<Bomb> bombIterator = GameStateCustom.bombs.iterator();
 
         while (bombIterator.hasNext()) {
             Bomb bomb = bombIterator.next();
@@ -560,10 +560,9 @@ public class BombermanController implements Initializable {
                         stoppedBomb.setTimer(kickingBomb.getTimer());
 
                         bombIterator.remove();
-                        gameState.bombs.add(stoppedBomb);
+                        GameStateCustom.bombs.add(stoppedBomb);
                         continue;
                     }
-                    soundManager.playSound("kick");
                 }
             }
 
@@ -572,7 +571,7 @@ public class BombermanController implements Initializable {
                 bombIterator.remove();
 
                 if (bomb.getOwner() >= 1 && bomb.getOwner() <= 4) {
-                    gameState.getPlayers()[bomb.getOwner() - 1].setBombsRemaining(gameState.getPlayers()[bomb.getOwner() - 1].getBombsRemaining()+1);
+                    GameStateCustom.players[bomb.getOwner() - 1].setBombsRemaining(GameStateCustom.players[bomb.getOwner() - 1].getBombsRemaining()+1);
                 }
             }
         }
@@ -580,9 +579,9 @@ public class BombermanController implements Initializable {
 
 
     private void explodeBomb(Bomb bomb) {
-        int range = gameState.getPlayers()[bomb.getOwner() - 1].getBombRange();
+        int range = GameStateCustom.players[bomb.getOwner() - 1].getBombRange();
 
-        gameState.explosions.add(new Explosion(bomb.getPos().getX(), bomb.getPos().getY()));
+        GameStateCustom.explosions.add(new Explosion(bomb.getPos().getX(), bomb.getPos().getY()));
 
         int[][] directions = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
 
@@ -596,28 +595,28 @@ public class BombermanController implements Initializable {
                     break;
                 }
 
-                if (gameState.walls.contains(explPos)) {
+                if (GameStateCustom.walls.contains(explPos)) {
                     break;
                 }
 
-                gameState.explosions.add(new Explosion(newX, newY));
+                GameStateCustom.explosions.add(new Explosion(newX, newY));
 
                 // Vérifier si c'est un mur destructible
-                if (gameState.destructibleWalls.contains(explPos)) {
-                    gameState.destructibleWalls.remove(explPos);
+                if (GameStateCustom.destructibleWalls.contains(explPos)) {
+                    GameStateCustom.destructibleWalls.remove(explPos);
 
 
                     // Révéler l'objet s'il y en a un
-                    Item hiddenItem = gameState.hiddenItems.get(explPos);
+                    Item hiddenItem = GameStateCustom.hiddenItems.get(explPos);
                     if (hiddenItem != null) {
-                        gameState.visibleItems.put(explPos, hiddenItem);
-                        gameState.hiddenItems.remove(explPos);
+                        GameStateCustom.visibleItems.put(explPos, hiddenItem);
+                        GameStateCustom.hiddenItems.remove(explPos);
                     }
                     break;
                 }
             }
         }
-        soundManager.playSound("explosion");
+        //soundManager.playSound("explosion"); // Jouer le son d'explosion
     }
 
     private void tryKickBomb(Player player, KeyCode direction) {
@@ -629,7 +628,7 @@ public class BombermanController implements Initializable {
         Position bombPos = new Position(player.getPos().getX() + kickDirection.getX(), player.getPos().getY() + kickDirection.getY());
 
         Bomb bombToKick = null;
-        for (Bomb bomb : gameState.bombs) {
+        for (Bomb bomb : GameStateCustom.bombs) {
             if (bomb.getPos().equals(bombPos)) {
                 if (!(bomb instanceof KickingBomb)) {
                     bombToKick = bomb;
@@ -640,30 +639,6 @@ public class BombermanController implements Initializable {
 
         if (bombToKick != null) {
             kickBomb(bombToKick, kickDirection);
-        }
-    }
-
-    static class KickingBomb extends Bomb {
-        private Position direction;
-        private int kickSpeed = 8; // Plus le nombre est grand, plus c'est lent
-        private int kickTimer = 0;
-
-        KickingBomb(int x, int y, int owner, Position direction) {
-            super(x, y, owner);
-            this.direction = direction;
-        }
-
-        public Position getDirection() {
-            return direction;
-        }
-
-        boolean shouldMove() {
-            kickTimer++;
-            if (kickTimer >= kickSpeed) {
-                kickTimer = 0;
-                return true;
-            }
-            return false;
         }
     }
 
@@ -688,18 +663,13 @@ public class BombermanController implements Initializable {
 
     private void kickBomb(Bomb bomb, Position direction) {
         // Supprimer l'ancienne bombe de la liste
-        gameState.bombs.remove(bomb);
+        GameStateCustom.bombs.remove(bomb);
 
         // Créer une nouvelle bombe qui bouge
-        KickingBomb kickingBomb = new KickingBomb(
-                bomb.getPos().getX(),
-                bomb.getPos().getY(),
-                bomb.getOwner(),
-                direction
-        );
-        kickingBomb.setTimer(bomb.getTimer()); // Corriger ici - utiliser setTimer au lieu de setKickTimer
+        KickingBomb kickingBomb = new KickingBomb(bomb.getPos().getX(), bomb.getPos().getY(), bomb.getOwner(), direction);
+        kickingBomb.setKickTimer(bomb.getTimer());
 
-        gameState.bombs.add(kickingBomb);
+        GameStateCustom.bombs.add(kickingBomb);
     }
 
     private boolean canMoveBombTo(Position pos) {
@@ -707,12 +677,12 @@ public class BombermanController implements Initializable {
             return false;
         }
 
-        if (gameState.walls.contains(pos) || gameState.destructibleWalls.contains(pos)) {
+        if (GameStateCustom.walls.contains(pos) || GameStateCustom.destructibleWalls.contains(pos)) {
             return false;
         }
 
         // Vérifier qu'il n'y a pas déjà une bombe à cette position
-        for (Bomb bomb : gameState.bombs) {
+        for (Bomb bomb : GameStateCustom.bombs) {
             if (bomb.getPos().equals(pos)) {
                 return false;
             }
@@ -722,9 +692,8 @@ public class BombermanController implements Initializable {
     }
 
     private void updateExplosions() {
-        gameState.explosions.removeIf(explosion -> {
+        GameStateCustom.explosions.removeIf(explosion -> {
             explosion.timer--;
-            // LE SON D'EXPLOSION EST JOUÉ ICI
             return explosion.timer <= 0;
         });
     }
@@ -733,15 +702,15 @@ public class BombermanController implements Initializable {
         long currentTime = System.currentTimeMillis();
 
         for (int i = 0; i < 4; i++) {
-            Player player = gameState.getPlayers()[i];
+            Player player = GameStateCustom.players[i];
             if (player.getIsInvulnerable() && currentTime >= player.getInvulnerabilityEndTime()) {
                 player.setIsInvulnerable(false);
                 player.setBlinking(false); // Arrêter le clignotement
             }
         }
-        for (Explosion explosion : gameState.explosions) {
+        for (Explosion explosion : GameStateCustom.explosions) {
             for (int i = 0; i < 4; i++) {
-                Player player = gameState.getPlayers()[i];
+                Player player = GameStateCustom.players[i];
 
                 if (player.getisAlive() &&
                         explosion.pos.equals(player.getPos()) &&
@@ -773,7 +742,6 @@ public class BombermanController implements Initializable {
 
                         System.out.println("Joueur " + (i + 1) + " a perdu une vie. Vies restantes: " + player.getLives());
                     }
-                    soundManager.playSound("death");
 
                     // Important : sortir de la boucle pour éviter les multiples hits
                     break;
@@ -798,15 +766,15 @@ public class BombermanController implements Initializable {
     private void checkItemPickup() {
         // Vérifier pour tous les joueurs
         for (int i = 0; i < 4; i++) {
-            checkItemPickupForPlayer(gameState.getPlayers()[i], i);
+            checkItemPickupForPlayer(GameStateCustom.players[i], i);
         }
     }
 
     private void checkItemPickupForPlayer(Player player, int playerIndex) {
-        Item item = gameState.visibleItems.get(player.getPos());
+        Item item = GameStateCustom.visibleItems.get(player.getPos());
         if (item != null) {
             applyItemEffect(player, item, playerIndex);
-            gameState.visibleItems.remove(player.getPos());
+            GameStateCustom.visibleItems.remove(player.getPos());
         }
     }
 
@@ -815,18 +783,15 @@ public class BombermanController implements Initializable {
             case FEU:
                 player.setBombRange(player.getBombRange()+1);
                 player.setFeuBonusCount(player.getFeuBonusCount()+1);
-                soundManager.playSound("pickup");
                 break;
             case VITESSE:
                 player.setSpeedMultiplier(player.getSpeedMultiplier()+0.5);
                 player.setVitesseBonusCount(player.getVitesseBonusCount()+1);
-                soundManager.playSound("pickup");
                 break;
             case BOMBE:
                 player.setMaxBombs(player.getMaxBombs()+1);
                 player.setBombsRemaining(player.getBombsRemaining()+1);
                 player.setBombeBonusCount(player.getBombeBonusCount()+1);
-                soundManager.playSound("pickup");
                 break;
             case SKULL:
                 player.setLives(player.getLives()-1);
@@ -842,7 +807,6 @@ public class BombermanController implements Initializable {
                 if (player.getKickBonusCount() < 2) {
                     player.setKickBonusCount(player.getKickBonusCount()+1);
                     player.setcanKick(true);
-                    soundManager.playSound("pickup");
                 }
                 break;
         }
@@ -892,7 +856,7 @@ public class BombermanController implements Initializable {
         int winner = -1;
 
         for (int i = 0; i < 4; i++) {
-            if (gameState.getPlayers()[i].getisAlive()) {
+            if (GameStateCustom.players[i].getisAlive()) {
                 alivePlayers++;
                 winner = i + 1;
             }
@@ -909,7 +873,6 @@ public class BombermanController implements Initializable {
         }
         if (winner > 0) {
             System.out.println("Joueur " + winner + " gagne !");
-            soundManager.playSound("win");
         } else {
             System.out.println("Match nul !");
         }
@@ -924,12 +887,11 @@ public class BombermanController implements Initializable {
         }
         soundManager.stopBackgroundMusic();
         System.out.println("Game Over: " + message);
-        soundManager.playSound("lose");
     }
 
     private boolean isPlayerAt(Position pos) {
-        for (int i = 0; i < gameState.getPlayers().length; i++) {
-            if (gameState.getPlayers()[i] != null && pos.equals(gameState.getPlayers()[i].getPos())) {
+        for (int i = 0; i < GameStateCustom.players.length; i++) {
+            if (GameStateCustom.players[i] != null && pos.equals(GameStateCustom.players[i].getPos())) {
                 return true;
             }
         }
@@ -941,43 +903,51 @@ public class BombermanController implements Initializable {
         Label[] bombsLabels = {player1BombsLabel, player2BombsLabel, player3BombsLabel, player4BombsLabel};
 
         for (int i = 0; i < 4; i++) {
-            if (bombsLabels[i] != null) {
-                bombsLabels[i].setText("Bombes: " + gameState.getPlayers()[i].getBombsRemaining());
+            if (bombsLabels[i] != null && GameStateCustom.players[i] != null) {
+                bombsLabels[i].setText("Bombes: " + GameStateCustom.players[i].getBombsRemaining());
             }
         }
 
-
         if (levelLabel != null) {
-            levelLabel.setText("Niveau: " + gameState.level);
+            levelLabel.setText("Niveau: " + GameStateCustom.level);
         }
 
         // Affichage des vies
-        if (livesLabel != null) {
-            livesLabel.setText("x" + gameState.getPlayers()[0].getLives());
+        if (GameStateCustom.players[0] != null && livesLabel != null) {
+            livesLabel.setText("x" + GameStateCustom.players[0].getLives());
         }
 
-        if (livesLabel2 != null) {
-            livesLabel2.setText("x" + gameState.getPlayers()[1].getLives());
-        }
-        if (livesLabel3 != null) {
-            livesLabel3.setText("x" + gameState.getPlayers()[2].getLives());
-        }
-        if (livesLabel4 != null) {
-            livesLabel4.setText("x" + gameState.getPlayers()[3].getLives());
+        if (GameStateCustom.players[1] != null && livesLabel2 != null) {
+            livesLabel2.setText("x" + GameStateCustom.players[1].getLives());
         }
 
-        // Affichage des bonus
-        if (bonusLabel != null) {
-            String bonusText = String.format("J1 - Feu: %d | Vitesse: %d | Bombe: %d || J2 - Feu: %d | Vitesse: %d | Bombe: %d",
-                    gameState.getPlayers()[0].getFeuBonusCount(),
-                    gameState.getPlayers()[0].getVitesseBonusCount(),
-                    gameState.getPlayers()[0].getBombeBonusCount(),
-                    gameState.getPlayers()[1].getFeuBonusCount(),
-                    gameState.getPlayers()[1].getVitesseBonusCount(),
-                    gameState.getPlayers()[1].getBombeBonusCount());
+        if (GameStateCustom.players[2] != null && livesLabel3 != null) {
+            livesLabel3.setText("x" + GameStateCustom.players[2].getLives());
+        }
+
+        if (GameStateCustom.players[3] != null && livesLabel4 != null) {
+            livesLabel4.setText("x" + GameStateCustom.players[3].getLives());
+        }
+
+        // Affichage des bonus pour J1 et J2 uniquement (comme dans ton code d’origine)
+        if (bonusLabel != null &&
+                GameStateCustom.players[0] != null &&
+                GameStateCustom.players[1] != null) {
+
+            String bonusText = String.format(
+                    "J1 - Feu: %d | Vitesse: %d | Bombe: %d || J2 - Feu: %d | Vitesse: %d | Bombe: %d",
+                    GameStateCustom.players[0].getFeuBonusCount(),
+                    GameStateCustom.players[0].getVitesseBonusCount(),
+                    GameStateCustom.players[0].getBombeBonusCount(),
+                    GameStateCustom.players[1].getFeuBonusCount(),
+                    GameStateCustom.players[1].getVitesseBonusCount(),
+                    GameStateCustom.players[1].getBombeBonusCount()
+            );
+
             bonusLabel.setText(bonusText);
         }
     }
+
 
 
     private void render() {
@@ -994,7 +964,7 @@ public class BombermanController implements Initializable {
         }
 
         // Objets visibles
-        for (Map.Entry<Position, Item> entry : gameState.visibleItems.entrySet()) {
+        for (Map.Entry<Position, Item> entry : GameStateCustom.visibleItems.entrySet()) {
             Position pos = entry.getKey();
             Item item = entry.getValue();
 
@@ -1011,9 +981,6 @@ public class BombermanController implements Initializable {
                     break;
                 case SKULL:
                     itemImage = skullImage;
-                    break;
-                case KICK:
-                    itemImage = kickImage;
                     break;
             }
 
@@ -1034,9 +1001,6 @@ public class BombermanController implements Initializable {
                     case SKULL:
                         gc.setFill(Color.web("#8B008B"));
                         break;
-                    case KICK:
-                        gc.setFill(Color.web("#FFD700"));
-                        break;
                 }
                 gc.fillOval(pos.getX() * CELL_SIZE + 8, pos.getY() * CELL_SIZE + 8, CELL_SIZE - 16, CELL_SIZE - 16);
             }
@@ -1044,7 +1008,7 @@ public class BombermanController implements Initializable {
 
         // Murs indestructibles
         gc.setFill(Color.web("#424242"));
-        for (Position wall : gameState.walls) {
+        for (Position wall : GameStateCustom.walls) {
             gc.fillRect(wall.getX() * CELL_SIZE, wall.getY() * CELL_SIZE, CELL_SIZE, CELL_SIZE);
             // Effet 3D
             gc.setFill(Color.web("#616161"));
@@ -1054,7 +1018,7 @@ public class BombermanController implements Initializable {
         }
 
         // Murs destructibles
-        for (Position wall : gameState.destructibleWalls) {
+        for (Position wall : GameStateCustom.destructibleWalls) {
             if (brickImage != null) {
                 gc.drawImage(brickImage, wall.getX() * CELL_SIZE, wall.getY() * CELL_SIZE, CELL_SIZE, CELL_SIZE);
             } else {
@@ -1068,7 +1032,7 @@ public class BombermanController implements Initializable {
         }
 
         // Explosions - Utiliser le GIF d'explosion
-        for (Explosion explosion : gameState.explosions) {
+        for (Explosion explosion : GameStateCustom.explosions) {
             if (fireball != null) {
                 // Utiliser l'image GIF d'explosion
                 gc.drawImage(fireball, explosion.pos.getX() * CELL_SIZE, explosion.pos.getY() * CELL_SIZE, CELL_SIZE, CELL_SIZE);
@@ -1094,8 +1058,8 @@ public class BombermanController implements Initializable {
 
         // Affichage des joueurs
         for (int i = 0; i < 4; i++) {
-            Player player = gameState.getPlayers()[i];
-            if (player.getisAlive()) {
+            Player player = GameStateCustom.players[i];
+            if (player != null && player.getisAlive()) {
                 Image playerImage = getPlayerImage(i);
 
                 if (playerImage != null) {
@@ -1126,7 +1090,7 @@ public class BombermanController implements Initializable {
         }
 
         // Bombes - Remplacées par l'image de bombe statique
-        for (Bomb bomb : gameState.bombs) {
+        for (Bomb bomb : GameStateCustom.bombs) {
             if (explosionGifImage != null) {
                 // Utiliser l'image de bombe statique
                 gc.drawImage(explosionGifImage, bomb.getPos().getX() * CELL_SIZE, bomb.getPos().getY() * CELL_SIZE, CELL_SIZE, CELL_SIZE);
@@ -1199,125 +1163,6 @@ public class BombermanController implements Initializable {
 
         return keyMappings;
     }
-    private void debugBotMovement() {
-        System.out.println("=== DEBUG BOT MOVEMENT ===");
 
-        for (int i = 0; i < 4; i++) {
-            Player player = gameState.getPlayers()[i];
-            if (player != null && player.isBot() && player.getisAlive()) {
-                System.out.println("Bot " + (i + 1) + ":");
-                System.out.println("  Position actuelle: (" + player.getPos().getX() + ", " + player.getPos().getY() + ")");
-
-                // Vérifier les mouvements possibles dans toutes les directions
-                Position currentPos = player.getPos();
-                Position[] directions = {
-                        new Position(currentPos.getX(), currentPos.getY() - 1), // UP
-                        new Position(currentPos.getX(), currentPos.getY() + 1), // DOWN
-                        new Position(currentPos.getX() - 1, currentPos.getY()), // LEFT
-                        new Position(currentPos.getX() + 1, currentPos.getY())  // RIGHT
-                };
-                String[] dirNames = {"UP", "DOWN", "LEFT", "RIGHT"};
-
-                for (int j = 0; j < directions.length; j++) {
-                    Position testPos = directions[j];
-                    boolean canMove = canMoveToWithoutPlayerCollision(testPos, i);
-                    System.out.println("  " + dirNames[j] + " (" + testPos.getX() + ", " + testPos.getY() + "): " +
-                            (canMove ? "LIBRE" : "BLOQUÉ"));
-
-                    if (!canMove) {
-                        // Détailler pourquoi c'est bloqué
-                        System.out.println("    Raisons du blocage:");
-
-                        // Vérifier les limites
-                        if (testPos.getX() < 0 || testPos.getX() >= GRID_SIZE ||
-                                testPos.getY() < 0 || testPos.getY() >= GRID_SIZE) {
-                            System.out.println("      - Hors limites de la grille");
-                        }
-
-                        // Vérifier les murs
-                        if (gameState.walls.contains(testPos)) {
-                            System.out.println("      - Mur indestructible");
-                        }
-
-                        if (gameState.destructibleWalls.contains(testPos)) {
-                            System.out.println("      - Mur destructible");
-                        }
-
-                        // Vérifier les bombes
-                        for (Bomb bomb : gameState.bombs) {
-                            if (bomb.getPos().equals(testPos)) {
-                                System.out.println("      - Bombe présente");
-                                break;
-                            }
-                        }
-
-                        // Vérifier les autres joueurs
-                        for (int k = 0; k < gameState.getPlayers().length; k++) {
-                            if (k != i) {
-                                Player otherPlayer = gameState.getPlayers()[k];
-                                if (otherPlayer.getisAlive() && testPos.equals(otherPlayer.getPos())) {
-                                    System.out.println("      - Autre joueur présent (Joueur " + (k + 1) + ")");
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Vérifier si le bot est complètement bloqué
-                boolean hasValidMove = false;
-                for (int j = 0; j < directions.length; j++) {
-                    if (canMoveToWithoutPlayerCollision(directions[j], i)) {
-                        hasValidMove = true;
-                        break;
-                    }
-                }
-
-                if (!hasValidMove) {
-                    System.out.println("  ⚠️  BOT COMPLÈTEMENT BLOQUÉ ⚠️");
-                }
-
-                System.out.println();
-            }
-        }
-        System.out.println("=== FIN DEBUG ===");
-    }
-    private void checkIfBotsAreStuck() {
-        for (int i = 0; i < 4; i++) {
-            Player player = gameState.getPlayers()[i];
-            if (player != null && player.isBot() && player.getisAlive()) {
-                Position currentPos = player.getPos();
-
-                // Vérifier si le bot n'a pas bougé depuis longtemps
-                if (previousPositions[i] != null &&
-                        currentPos.equals(previousPositions[i])) {
-
-                    // Le bot n'a pas bougé, vérifier s'il est bloqué
-                    boolean canMoveAnywhere = false;
-                    Position[] testDirections = {
-                            new Position(currentPos.getX(), currentPos.getY() - 1),
-                            new Position(currentPos.getX(), currentPos.getY() + 1),
-                            new Position(currentPos.getX() - 1, currentPos.getY()),
-                            new Position(currentPos.getX() + 1, currentPos.getY())
-                    };
-
-                    for (Position testPos : testDirections) {
-                        if (canMoveToWithoutPlayerCollision(testPos, i)) {
-                            canMoveAnywhere = true;
-                            break;
-                        }
-                    }
-
-                    if (!canMoveAnywhere) {
-                        System.out.println("⚠️ Bot " + (i + 1) + " est coincé à la position (" +
-                                currentPos.getX() + ", " + currentPos.getY() + ")");
-
-                        // Option: téléporter le bot vers une position libre
-                        // teleportBotToSafePosition(player, i);
-                    }
-                }
-            }
-        }
-    }
 
 }

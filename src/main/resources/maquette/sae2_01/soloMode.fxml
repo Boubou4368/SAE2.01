@@ -10,6 +10,8 @@
     <VBox alignment="CENTER" spacing="20">
         <Label text="Choisir le Mode" styleClass="label"/>
         <Button text="Normal" onAction="#onNormal" styleClass="menu-button"/>
+        <Button text="Capture The Flag" onAction="#onCTF" styleClass="menu-button"/>
+        <Button text="Custom" onAction="#onCustom" styleClass="menu-button"/>
         <Button text="Retour" onAction="#onQuit" styleClass="menu-button"/>
     </VBox>
 </StackPane>

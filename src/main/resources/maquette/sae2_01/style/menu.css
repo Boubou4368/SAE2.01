@@ -6,17 +6,29 @@
 
 .label {
     -fx-font-size: 25px;
+    -fx-background-color: rgba(255, 255, 255, 0.6);  /* fond noir transparent */
+    -fx-background-radius: 5;                  /* coins arrondis */
+    -fx-padding: 5px;                          /* espace intérieur */
+    -fx-font-weight: bold;
 }
 
 #titleLabel {
     -fx-font-size: 56px;
     -fx-font-family: VT323;
+    -fx-text-fill: black;
+    -fx-background-color: rgba(255, 255, 255, 0.6);  /* fond noir transparent */
+    -fx-background-radius: 5;                  /* coins arrondis */
+    -fx-padding: 5px;                          /* espace intérieur */
+    -fx-font-weight: bold;
+
 }
 .fond-stackpane {
-    -fx-background-color: green;
-    -fx-background-size: cover;
+    -fx-background-image: url("../Images/start.png");
     -fx-background-repeat: no-repeat;
+    -fx-background-size: cover;
+    -fx-background-position: center;
 }
+
 .menu-vbox {
     -fx-alignment: center;
 }

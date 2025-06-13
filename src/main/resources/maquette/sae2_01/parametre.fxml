@@ -12,6 +12,6 @@
         <Button fx:id="J2"  text="Touches Joueur 2" onAction="#onTJ" styleClass="menu-button"/>
         <Button fx:id="J3"  text="Touches Joueur 3" onAction="#onTJ" styleClass="menu-button"/>
         <Button fx:id="J4"  text="Touches Joueur 4" onAction="#onTJ" styleClass="menu-button"/>
-        <Button text="Quitter" onAction="#onQuit" styleClass="menu-button"/>
+        <Button text="Retour" onAction="#onQuit" styleClass="menu-button"/>
     </VBox>
 </StackPane>

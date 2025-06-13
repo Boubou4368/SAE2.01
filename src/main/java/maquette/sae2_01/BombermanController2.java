@@ -13,6 +13,9 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
@@ -100,6 +103,8 @@ public class BombermanController2 implements Initializable {
     private long lastMoveTimeP4 = 0; // NOUVEAU
     private static final long MOVE_DELAY = 150_000_000; // 150ms en nanosecondes
 
+    public Map<Integer, KeyMapping> keyMappings = chargerTouches("src/main/resources/maquette/sae2_01/Touches.yaml");
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         gc = gameCanvas.getGraphicsContext2D();
@@ -114,7 +119,6 @@ public class BombermanController2 implements Initializable {
         startGameLoop();
         updateUI();
     }
-
 
     private void loadImages() {
         try {
@@ -1237,5 +1241,61 @@ public class BombermanController2 implements Initializable {
                 hiddenItems.put(availablePositions.get(index), new Item(ItemType.SKULL));
             }
         }
+    }
+
+    private Map<Integer, KeyMapping> chargerTouches(String cheminFichier) {
+        Map<Integer, KeyMapping> keyMappings = new HashMap<>();
+        int joueurActuel = -1;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(cheminFichier))) {
+            String ligne;
+            while ((ligne = reader.readLine()) != null) {
+                ligne = ligne.trim();
+                if (ligne.isEmpty()) continue;
+
+                if (ligne.startsWith("J")) {
+                    try {
+                        joueurActuel = Integer.parseInt(ligne.substring(1, 2)) - 1;
+                        keyMappings.put(joueurActuel, new KeyMapping());
+                    } catch (NumberFormatException e) {
+                        System.err.println("Ligne joueur invalide : " + ligne);
+                    }
+                } else if (joueurActuel != -1 && ligne.contains(":")) {
+                    String[] parts = ligne.split(":", 2);
+                    if (parts.length < 2) continue;
+
+                    String direction = parts[0].trim();
+                    String toucheTexte = parts[1].trim();
+
+                    if (toucheTexte.isEmpty()) continue;
+
+                    String toucheKeyCode;
+                    if (toucheTexte.equalsIgnoreCase("Caps Lock")) {
+                        toucheKeyCode = "CAPS"; // Correction spécifique
+                    } else {
+                        toucheKeyCode = toucheTexte.toUpperCase().replace(" ", "_");
+                    }
+
+
+                    try {
+                        KeyCode key = KeyCode.valueOf(toucheKeyCode);
+                        KeyMapping mapping = keyMappings.get(joueurActuel);
+                        switch (direction) {
+                            case "U" -> mapping.up = key;
+                            case "D" -> mapping.down = key;
+                            case "L" -> mapping.left = key;
+                            case "R" -> mapping.right = key;
+                            case "B" -> mapping.bomb = key;
+                        }
+                    } catch (IllegalArgumentException e) {
+                        System.err.println("Touche invalide ignorée : '" + toucheTexte + "'");
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Erreur lors de la lecture du fichier de touches : " + e.getMessage());
+        }
+
+        return keyMappings;
     }
 }

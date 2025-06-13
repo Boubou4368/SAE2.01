@@ -19,7 +19,7 @@ public class ParametreController {
     public void initialize() {
         titleLabel.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
-                newScene.getStylesheets().add(getClass().getResource("parametre.css").toExternalForm());
+                newScene.getStylesheets().add(getClass().getResource("style/parametre.css").toExternalForm());
             }
         });
     }
@@ -74,7 +74,7 @@ public class ParametreController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("TJ.fxml"));
             Scene gameScene = new Scene(loader.load());
             TJController controller = loader.getController();
-            gameScene.getStylesheets().add(getClass().getResource("TJ.css").toExternalForm());
+            gameScene.getStylesheets().add(getClass().getResource("style/TJ.css").toExternalForm());
             Button source = (Button) event.getSource();
             String joueur = source.getId();
             controller.setJoueur(joueur);

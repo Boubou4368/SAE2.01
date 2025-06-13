@@ -3,25 +3,23 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
-<VBox xmlns="http://javafx.com/javafx/17.0.6"
-      xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="maquette.sae2_01.TJController"
-      stylesheets="@style/TJ.css"
-      spacing="5" alignment="CENTER" style="-fx-padding: 20;"
-      fx:id="root">
+<StackPane xmlns:fx="http://javafx.com/fxml" fx:controller="maquette.sae2_01.TJController" stylesheets="@style/TJ.css" styleClass="fond-stackpane">
+    <VBox spacing="5" alignment="CENTER" fx:id="root">
+        <Label fx:id="lblInfo" text="Clique sur le bouton pour commencer" styleClass="lblInfo"/>
+        <Label text="Haut"/>
+        <Button fx:id="U" text="Assigner une touche" onAction="#TJ"/>
+        <Label text="Bas"/>
+        <Button fx:id="D" text="Assigner une touche" onAction="#TJ"/>
+        <Label text="Gauche"/>
+        <Button fx:id="L" text="Assigner une touche" onAction="#TJ"/>
+        <Label text="Droite"/>
+        <Button fx:id="R" text="Assigner une touche" onAction="#TJ"/>
+        <Label text="Bombe"/>
+        <Button fx:id="B" text="Assigner une touche" onAction="#TJ"/>
+        <Button text="Retour" onAction="#onQuit" styleClass="menu-button"/>
 
-<Label fx:id="lblInfo" text="Clique sur le bouton pour commencer" styleClass="lblInfo"/>
-<Label text="Haut"/>
-<Button fx:id="U" text="Assigner une touche" onAction="#TJ"/>
-<Label text="Bas"/>
-<Button fx:id="D" text="Assigner une touche" onAction="#TJ"/>
-<Label text="Gauche"/>
-<Button fx:id="L" text="Assigner une touche" onAction="#TJ"/>
-<Label text="Droite"/>
-<Button fx:id="R" text="Assigner une touche" onAction="#TJ"/>
-<Label text="Bombe"/>
-<Button fx:id="B" text="Assigner une touche" onAction="#TJ"/>
-<Button text="Quitter" onAction="#onQuit" styleClass="menu-button"/>
-
-</VBox>
+    </VBox>
+</StackPane>

@@ -1,0 +1,43 @@
+.title {
+    -fx-font-size: 24px;
+    -fx-text-fill: #ff6b35;
+    -fx-font-weight: bold;
+}
+
+.subtitle {
+    -fx-font-size: 16px;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.root {
+    -fx-background-color: #1a1a1a;
+}
+
+
+
+.button {
+    -fx-background-color: #ff6b35;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 24px;
+}
+
+.radio-button {
+    -fx-text-fill: #ff6b35;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(255,107,53,0.5), 3, 0, 0, 0);
+}
+
+
+.radio-button .radio {
+    -fx-opacity: 0;
+}
+
+
+
+.radio-button:selected {
+    -fx-text-fill: orange;       /* couleur du texte quand sélectionné */
+    -fx-font-weight: bold;       /* texte en gras */
+}

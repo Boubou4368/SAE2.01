@@ -7,5 +7,5 @@
 <?import javafx.scene.layout.*?>
 
 <AnchorPane fx:id="root" styleClass="background-pane" xmlns:fx="http://javafx.com/fxml" fx:controller="maquette.sae2_01.StartController">
-    <Button text="Start" onAction="#onStart" AnchorPane.bottomAnchor="10.0" AnchorPane.rightAnchor="10.0"/>
+    <Button text="Start" onAction="#onStart" AnchorPane.bottomAnchor="10.0" AnchorPane.rightAnchor="10.0" styleClass="button"/>
 </AnchorPane>
