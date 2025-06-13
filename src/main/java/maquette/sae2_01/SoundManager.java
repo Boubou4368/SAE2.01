@@ -30,20 +30,20 @@ public class SoundManager {
     private void loadSounds() {
         try {
             // Charger la musique de fond
-            Media backgroundMusicMedia = new Media(getClass().getResource("/maquette/sae2_01/sounds/BombermanHome.mp3").toString());
+            Media backgroundMusicMedia = new Media(getClass().getResource("/maquette/sae2_01/sounds/songbomberman1.mp3").toString());
             backgroundMusic = new MediaPlayer(backgroundMusicMedia);
             backgroundMusic.setVolume(volume * 0.3); // Musique plus douce
             backgroundMusic.setCycleCount(MediaPlayer.INDEFINITE);
 
             // Charger les effets sonores
-            loadSound("BombermanHome", "/maquette/sae2_01/sounds/BombermanHome.wav");
-//            loadSound("explosion", "/maquette/sae2_01/sounds/explosion.wav");
-//            loadSound("pickup", "/maquette/sae2_01/sounds/pickup.wav");
-//            loadSound("death", "/maquette/sae2_01/sounds/death.wav");
-//            loadSound("win", "/maquette/sae2_01/sounds/win.wav");
-//            loadSound("lose", "/maquette/sae2_01/sounds/lose.wav");
-//            loadSound("kick", "/maquette/sae2_01/sounds/kick.wav");
-//            loadSound("walk", "/maquette/sae2_01/sounds/walk.wav");
+            loadSound("BombermanHome", "/maquette/sae2_01/sounds/songbomberman1.mp3");
+            loadSound("explosion", "/maquette/sae2_01/sounds/sonbombe.wav"); // SON D'EXPLOSION AJOUTÉ
+            loadSound("pickup", "/maquette/sae2_01/sounds/songitem.wav"); // SON D'ITEM AJOUTÉ
+            loadSound("bomb_place", "/maquette/sae2_01/sounds/songplacebomb.wav"); // SON DE PLACEMENT DE BOMBE AJOUTÉ
+            loadSound("death", "/maquette/sae2_01/sounds/death.wav"); // SON DE PLACEMENT DE MORT
+            loadSound("kick", "/maquette/sae2_01/sounds/kick.mp3"); // SON DE PLACEMENT DE KICK
+            loadSound("win", "/maquette/sae2_01/sounds/winner.mp3"); //SON WINNER
+            loadSound("lose", "/maquette/sae2_01/sounds/loose.mp3"); //SON GAME OVER
 
         } catch (Exception e) {
             System.err.println("Erreur lors du chargement des sons: " + e.getMessage());
@@ -69,7 +69,30 @@ public class SoundManager {
             // Arrêter le son s'il joue déjà et le remettre au début
             player.stop();
             player.seek(Duration.ZERO);
+
+            // Ajuster le volume spécifiquement pour certains sons
+            if (soundName.equals("pickup")) {
+                player.setVolume(Math.min(1.0, volume * 1.5)); // 50% plus fort pour les items
+            } else if (soundName.equals("explosion")) {
+                player.setVolume(Math.min(1.0, volume * 1.1)); // 10% plus fort pour les explosions
+            } else if (soundName.equals("bomb_place")) {
+                player.setVolume(Math.min(1.0, volume * 1.7)); // 70% plus fort pour le placement de bombe
+            } else if (soundName.equals("death")) {
+                player.setVolume(Math.min(1.0, volume * 3.0)); // 250% plus fort pour la mort
+            } else if (soundName.equals("KICK")) {
+                player.setVolume(Math.min(1.0, volume * 3.0)); // 250% plus fort pour le kick
+            } else if (soundName.equals("lose")) {
+                player.setVolume(Math.min(1.0, volume * 1.1)); // 10% musique
+            }
+            else if (soundName.equals("win")) {
+                player.setVolume(Math.min(1.0, volume * 1.1)); // 10% musique
+            }else {
+                player.setVolume(volume);
+            }
+
             player.play();
+        } else {
+            System.err.println("Son non trouvé: " + soundName);
         }
     }
 
@@ -137,74 +160,3 @@ public class SoundManager {
         }
     }
 }
-
-// Modifications à apporter dans BombermanController.java
-// Ajoutez ces lignes au début de votre classe BombermanController :
-
-/*
-private SoundManager soundManager;
-
-// Dans la méthode initialize(), ajoutez :
-soundManager = SoundManager.getInstance();
-soundManager.startBackgroundMusic();
-
-// Dans la méthode placeBomb(), ajoutez :
-soundManager.playSound("bomb_place");
-
-// Dans la méthode explodeBomb(), ajoutez :
-soundManager.playSound("explosion");
-
-// Dans la méthode checkItemPickupForPlayer(), ajoutez dans chaque case :
-switch (item.type) {
-    case FEU:
-        player.bombRange++;
-        player.feuBonusCount++;
-        player.score += 50;
-        soundManager.playSound("pickup"); // AJOUT
-        break;
-    case VITESSE:
-        player.speedMultiplier += 0.3;
-        player.vitesseBonusCount++;
-        player.score += 30;
-        soundManager.playSound("pickup"); // AJOUT
-        break;
-    case BOMBE:
-        player.maxBombs++;
-        player.bombsRemaining++;
-        player.bombeBonusCount++;
-        player.score += 40;
-        soundManager.playSound("pickup"); // AJOUT
-        break;
-    case SKULL:
-        player.lives--;
-        soundManager.playSound("death"); // AJOUT
-        // ... reste du code
-        break;
-    case KICK:
-        if (player.kickBonusCount < 2) {
-            player.kickBonusCount++;
-            player.canKick = true;
-            player.score += 60;
-            soundManager.playSound("pickup"); // AJOUT
-        }
-        break;
-}
-
-// Dans la méthode kickBomb(), ajoutez :
-soundManager.playSound("kick");
-
-// Dans la méthode gameOver(), ajoutez :
-if (message.contains("gagne")) {
-    soundManager.playSound("win");
-} else {
-    soundManager.playSound("lose");
-}
-soundManager.stopBackgroundMusic();
-
-// Dans la méthode handlePlayerInput(), pour les sons de pas :
-if (moved && canMoveTo(newPos)) {
-    player.pos = newPos;
-    soundManager.playSound("walk");
-    // ... reste du code
-}
-*/

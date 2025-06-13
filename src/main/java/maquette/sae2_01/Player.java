@@ -8,7 +8,6 @@ public class Player {
     private int lives = 3;
     private boolean isAlive = true;
     private double speedMultiplier = 1.0;
-    private int score = 0;
 
     // Compteurs de bonus
     private int feuBonusCount = 0;
@@ -21,9 +20,8 @@ public class Player {
     private boolean isInvulnerable = false;
     private long invulnerabilityEndTime = 0;
     private boolean isBlinking = false;
-    private long blinkStartTime = 0;
-    private long blinkEndTime = 0;
-    private boolean isVisible = true;
+    private boolean isBot = false;
+
 
     public Player(int x, int y) { this.pos = new Position(x, y); }
 
@@ -42,18 +40,15 @@ public class Player {
             case FEU:
                 this.bombRange++;
                 this.feuBonusCount++;
-                this.score += 50;
                 break;
             case VITESSE:
                 this.speedMultiplier += 0.3;
                 this.vitesseBonusCount++;
-                this.score += 30;
                 break;
             case BOMBE:
                 this.maxBombs++;
                 this.bombsRemaining++;
                 this.bombeBonusCount++;
-                this.score += 40;
                 break;
             case SKULL:
                 this.lives--;
@@ -151,18 +146,16 @@ public class Player {
     public boolean isBlinking() { return isBlinking; }
     public void setBlinking(boolean blinking) { this.isBlinking = blinking; }
 
-    public long getBlinkStartTime() { return blinkStartTime; }
-    public void setBlinkStartTime(long blinkStartTime) { this.blinkStartTime = blinkStartTime; }
+    public boolean isBot() {
+        return isBot;
+    }
 
-    public long getBlinkEndTime() { return blinkEndTime; }
-    public void setBlinkEndTime(long blinkEndTime) { this.blinkEndTime = blinkEndTime; }
-
-    public boolean isVisible() { return isVisible; }
-    public void setVisible(boolean visible) { this.isVisible = visible; }
-
+    public void setBot(boolean bot) {
+        this.isBot = bot;
+    }
     @Override
     public String toString() {
         return "Player{pos=" + pos + ", lives=" + lives + ", isAlive=" + isAlive +
-                ", bombsRemaining=" + bombsRemaining + ", score=" + score + "}";
+                ", bombsRemaining=" + bombsRemaining + "}";
     }
 }

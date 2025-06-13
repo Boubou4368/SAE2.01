@@ -18,13 +18,13 @@ public class MenuController {
     public void initialize() {
         titleLabel.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
-                newScene.getStylesheets().add(getClass().getResource("menu.css").toExternalForm());
+                newScene.getStylesheets().add(getClass().getResource("style/menu.css").toExternalForm());
             }
         });
     }
 
     @FXML
-    private void onPlay(ActionEvent event) {
+    private void onPlaySolo(ActionEvent event) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("soloMode.fxml"));
             Scene gameScene = new Scene(loader.load());
@@ -37,7 +37,28 @@ public class MenuController {
             stage.show();
 
             // Donne le focus au canvas pour les touches clavier
-            SoloModeController controller = loader.getController();
+            SelectModeController controller = loader.getController();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    private void onPlaymulti(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("MultiMode.fxml"));
+            Scene gameScene = new Scene(loader.load());
+
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(gameScene);
+            stage.setTitle("Choisir le mode");
+            stage.setWidth(600);
+            stage.setHeight(500);
+            stage.show();
+
+            // Donne le focus au canvas pour les touches clavier
+            SelectModeController controller = loader.getController();
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -1,12 +1,11 @@
 package maquette.sae2_01;
 
 import java.util.*;
-import maquette.sae2_01.*;
 
 public class GameState {
     private static final int GRID_SIZE = 15;
 
-    public Player[] players = new Player[4];
+    public Player[] players;
     public List<Bomb> bombs = new ArrayList<>();
     public List<Explosion> explosions = new ArrayList<>();
     public Set<Position> walls = new HashSet<>();
@@ -15,31 +14,34 @@ public class GameState {
     public Map<Position, Item> visibleItems = new HashMap<>();
     public int level = 1;
 
-    GameState() {
-        // Positions de départ aux 4 coins
-        players[0] = new Player(1, 1);                          // Joueur 1
-        players[1] = new Player(GRID_SIZE - 2, GRID_SIZE - 2);   // Joueur 2
-        players[2] = new Player(1, GRID_SIZE - 2);               // Joueur 3
-        players[3] = new Player(GRID_SIZE - 2, 1);               // Joueur 4
+    public GameState(boolean isMulti, int numberOfBots) {
+        // Initialiser le tableau des joueurs
+        players = new Player[4];
+
+        if (isMulti) {
+            // Mode multijoueur - créer 4 joueurs humains aux 4 coins
+            players[0] = new Player(1, 1);                          // Joueur 1 - coin haut-gauche
+            players[1] = new Player(GRID_SIZE - 2, GRID_SIZE - 2);   // Joueur 2 - coin bas-droite
+            players[2] = new Player(1, GRID_SIZE - 2);               // Joueur 3 - coin bas-gauche
+            players[3] = new Player(GRID_SIZE - 2, 1);               // Joueur 4 - coin haut-droite
+
+            // Tous les joueurs sont humains en mode multijoueur
+            for (int i = 0; i < 4; i++) {
+                players[i].setBot(false);
+            }
+        } else {
+            // Mode solo - créer 1 joueur humain + des bots
+            players[0] = new Player(1, 1); // Joueur humain
+            players[0].setBot(false);
+            players[1] = new Bot(GRID_SIZE - 3, GRID_SIZE - 1);
+            players[2] = new Bot(1, GRID_SIZE - 2);
+            players[3] = new Bot(GRID_SIZE - 2, 1);
+            for (int i = 1; i < 4; i++) {
+                players[i].setBot(true);
+            }
+        }
 
         initializeMap();
-    }
-
-    // Méthodes d'accès pour compatibilité
-    public Player getPlayer1() {
-        return players[0];
-    }
-
-    public Player getPlayer2() {
-        return players[1];
-    }
-
-    public Player getPlayer3() {
-        return players[2];
-    }
-
-    public Player getPlayer4() {
-        return players[3];
     }
 
     private void initializeMap() {
@@ -78,6 +80,9 @@ public class GameState {
 
     }
 
+    public Player[] getPlayers() {
+        return players;
+    }
     private boolean isStartingArea(Position pos) {
         // Zone de départ joueur 1 (coin haut-gauche) - 3x3
         if (pos.getX() <= 2 && pos.getY() <= 2) return true;
@@ -194,4 +199,14 @@ public class GameState {
         }
         System.out.println("================");
     }
+
+    public int getPlayerIndex(Player player) {
+        for (int i = 0; i < players.length; i++) {
+            if (players[i].equals(player)) {
+                return i;
+            }
+        }
+        return -1; // retourne -1 si le joueur n'est pas trouvé
+    }
+
 }

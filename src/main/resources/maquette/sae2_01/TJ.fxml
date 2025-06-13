@@ -19,7 +19,7 @@
         <Button fx:id="R" text="Assigner une touche" onAction="#TJ"/>
         <Label text="Bombe"/>
         <Button fx:id="B" text="Assigner une touche" onAction="#TJ"/>
-        <Button text="Quitter" onAction="#onQuit" styleClass="menu-button"/>
+        <Button text="Retour" onAction="#onQuit" styleClass="menu-button"/>
 
     </VBox>
 </StackPane>
