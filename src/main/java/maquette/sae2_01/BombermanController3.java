@@ -134,43 +134,43 @@ public class BombermanController3 implements Initializable {
     }
 
     private void loadGameImages() {
-        brickImage = loadImage("/maquette/sae2_01/brique.png");
-        kickImage = loadImage("/maquette/sae2_01/kick.png");
-        feuImage = loadImage("/maquette/sae2_01/feu.png");
-        vitesseImage = loadImage("/maquette/sae2_01/vitesse.png");
-        bombeImage = loadImage("/maquette/sae2_01/bombe.png");
-        skullImage = loadImage("/maquette/sae2_01/skull.png");
-        explosionGifImage = loadImage("/maquette/sae2_01/explosion.gif");
-        fireball = loadImage("/maquette/sae2_01/blast.png");
+        brickImage = loadImage("/maquette/sae2_01/Images/brique.png");
+        kickImage = loadImage("/maquette/sae2_01/Images/kick.png");
+        feuImage = loadImage("/maquette/sae2_01/Images/feu.png");
+        vitesseImage = loadImage("/maquette/sae2_01/Images/vitesse.png");
+        bombeImage = loadImage("/maquette/sae2_01/Images/bombe.png");
+        skullImage = loadImage("/maquette/sae2_01/Images/skull.png");
+        explosionGifImage = loadImage("/maquette/sae2_01/Images/explosion.gif");
+        fireball = loadImage("/maquette/sae2_01/Images/blast.png");
     }
 
     private void loadPlayerImages() {
         // Joueur 1
-        P1B = loadImage("/maquette/sae2_01/P1_bas.gif");
-        P1H = loadImage("/maquette/sae2_01/P1_haut.gif");
-        P1G = loadImage("/maquette/sae2_01/P1_gauche.gif");
-        P1D = loadImage("/maquette/sae2_01/P1_droite.gif");
+        P1B = loadImage("/maquette/sae2_01/Images/P1_bas.gif");
+        P1H = loadImage("/maquette/sae2_01/Images/P1_haut.gif");
+        P1G = loadImage("/maquette/sae2_01/Images/P1_gauche.gif");
+        P1D = loadImage("/maquette/sae2_01/Images/P1_droite.gif");
         currentP1Image = P1B;
 
         // Joueur 2
-        P2B = loadImage("/maquette/sae2_01/P2_bas.gif");
-        P2H = loadImage("/maquette/sae2_01/P2_haut.gif");
-        P2G = loadImage("/maquette/sae2_01/P2_gauche.gif");
-        P2D = loadImage("/maquette/sae2_01/P2_droite.gif");
+        P2B = loadImage("/maquette/sae2_01/Images/P2_bas.gif");
+        P2H = loadImage("/maquette/sae2_01/Images/P2_haut.gif");
+        P2G = loadImage("/maquette/sae2_01/Images/P2_gauche.gif");
+        P2D = loadImage("/maquette/sae2_01/Images/P2_droite.gif");
         currentP2Image = P2B;
 
         // Joueur 3
-        P3B = loadImage("/maquette/sae2_01/P3_bas.gif");
-        P3H = loadImage("/maquette/sae2_01/P3_haut.gif");
-        P3G = loadImage("/maquette/sae2_01/P3_gauche.gif");
-        P3D = loadImage("/maquette/sae2_01/P3_droite.gif");
+        P3B = loadImage("/maquette/sae2_01/Images/P3_bas.gif");
+        P3H = loadImage("/maquette/sae2_01/Images/P3_haut.gif");
+        P3G = loadImage("/maquette/sae2_01/Images/P3_gauche.gif");
+        P3D = loadImage("/maquette/sae2_01/Images/P3_droite.gif");
         currentP3Image = P3B;
 
         // Joueur 4
-        P4B = loadImage("/maquette/sae2_01/P4_bas.gif");
-        P4H = loadImage("/maquette/sae2_01/P4_haut.gif");
-        P4G = loadImage("/maquette/sae2_01/P4_gauche.gif");
-        P4D = loadImage("/maquette/sae2_01/P4_droite.gif");
+        P4B = loadImage("/maquette/sae2_01/Images/P4_bas.gif");
+        P4H = loadImage("/maquette/sae2_01/Images/P4_haut.gif");
+        P4G = loadImage("/maquette/sae2_01/Images/P4_gauche.gif");
+        P4D = loadImage("/maquette/sae2_01/Images/P4_droite.gif");
         currentP4Image = P4B;
     }
 
@@ -179,7 +179,7 @@ public class BombermanController3 implements Initializable {
         ImageView[] icons = {livesIcon, livesIcon2, livesIcon3, livesIcon4};
 
         for (int i = 0; i < iconFiles.length; i++) {
-            iconeImage = loadImage("/maquette/sae2_01/" + iconFiles[i]);
+            iconeImage = loadImage("/maquette/sae2_01/Images/" + iconFiles[i]);
             if (icons[i] != null && iconeImage != null) {
                 icons[i].setImage(iconeImage);
             }
@@ -187,7 +187,7 @@ public class BombermanController3 implements Initializable {
     }
 
     private void loadTitleImage() {
-        iconeImage = loadImage("/maquette/sae2_01/titre.png");
+        iconeImage = loadImage("/maquette/sae2_01/Images/titre.png");
         if (titre != null && iconeImage != null) {
             titre.setImage(iconeImage);
         }

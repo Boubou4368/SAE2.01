@@ -6,7 +6,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<StackPane xmlns:fx="http://javafx.com/fxml" fx:controller="maquette.sae2_01.TJController" stylesheets="@TJ.css" styleClass="fond-stackpane">
+<StackPane xmlns:fx="http://javafx.com/fxml" fx:controller="maquette.sae2_01.TJController" stylesheets="@style/TJ.css" styleClass="fond-stackpane">
     <VBox spacing="5" alignment="CENTER" fx:id="root">
         <Label fx:id="lblInfo" text="Clique sur le bouton pour commencer" styleClass="lblInfo"/>
         <Label text="Haut"/>

@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <?import javafx.scene.image.ImageView?>
-<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="maquette.sae2_01.BombermanController3" stylesheets="@bomberman.css">
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="maquette.sae2_01.BombermanController3" stylesheets="@style/bomberman.css">
     <top>
         <VBox styleClass="header-panel">
             <children>

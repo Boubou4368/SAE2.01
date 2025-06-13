@@ -193,7 +193,7 @@ public class BombermanController implements Initializable {
     }
 
     private void loadPlayerIcons() {
-        String[] iconFiles = {"Images/icone.png", "Images/icone2.png", "Images/icone3.png", "images/icone4.png"};
+        String[] iconFiles = {"Images/icone.png", "Images/icone2.png", "Images/icone3.png", "Images/icone4.png"};
         ImageView[] icons = {livesIcon, livesIcon2, livesIcon3, livesIcon4};
 
         for (int i = 0; i < iconFiles.length; i++) {

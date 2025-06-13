@@ -10,7 +10,8 @@
     <VBox alignment="CENTER" spacing="20">
         <Button text="Solo" onAction="#onPlaySolo" styleClass="menu-button"/>
         <Button text="Multijoueur" onAction="#onPlaymulti" styleClass="menu-button"/>
+        <Button text="Editeur de niveau" onAction="#onEditeur" styleClass="menu-button"/>
         <Button text="Paramètres" onAction="#onParametre" styleClass="menu-button"/>
-        <Button text="Retour" onAction="#onQuit" styleClass="menu-button"/>
+        <Button text="Quitter" onAction="#onQuit" styleClass="menu-button"/>
     </VBox>
 </StackPane>

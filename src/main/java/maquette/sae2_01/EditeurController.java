@@ -17,7 +17,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.*;
-import java.util.Objects;
 
 public class EditeurController {
 
@@ -175,20 +174,20 @@ public class EditeurController {
 
 
     private void loadGameImages() {
-        brickImage = BombermanController.loadImage("/maquette/sae2_01/brique.png");
-        kickImage =  BombermanController.loadImage("/maquette/sae2_01/kick.png");
-        feuImage =  BombermanController.loadImage("/maquette/sae2_01/feu.png");
-        vitesseImage =  BombermanController.loadImage("/maquette/sae2_01/vitesse.png");
-        bombeImage =  BombermanController.loadImage("/maquette/sae2_01/bombe.png");
-        skullImage =  BombermanController.loadImage("/maquette/sae2_01/skull.png");
-        joueur1 =  BombermanController.loadImage("/maquette/sae2_01/icone.png");
-        joueur2 =  BombermanController.loadImage("/maquette/sae2_01/icone2.png");
-        joueur3 =  BombermanController.loadImage("/maquette/sae2_01/icone3.png");
-        joueur4 =  BombermanController.loadImage("/maquette/sae2_01/icone4.png");
-        drapeau1 =  BombermanController.loadImage("/maquette/sae2_01/drapeau1.png");
-        drapeau2 =  BombermanController.loadImage("/maquette/sae2_01/drapeau2.png");
-        drapeau3 =  BombermanController.loadImage("/maquette/sae2_01/drapeau3.png");
-        drapeau4 =  BombermanController.loadImage("/maquette/sae2_01/drapeau4.png");
+        brickImage = BombermanController.loadImage("/maquette/sae2_01/Images/brique.png");
+        kickImage =  BombermanController.loadImage("/maquette/sae2_01/Images/kick.png");
+        feuImage =  BombermanController.loadImage("/maquette/sae2_01/Images/feu.png");
+        vitesseImage =  BombermanController.loadImage("/maquette/sae2_01/Images/vitesse.png");
+        bombeImage =  BombermanController.loadImage("/maquette/sae2_01/Images/bombe.png");
+        skullImage =  BombermanController.loadImage("/maquette/sae2_01/Images/skull.png");
+        joueur1 =  BombermanController.loadImage("/maquette/sae2_01/Images/icone.png");
+        joueur2 =  BombermanController.loadImage("/maquette/sae2_01/Images/icone2.png");
+        joueur3 =  BombermanController.loadImage("/maquette/sae2_01/Images/icone3.png");
+        joueur4 =  BombermanController.loadImage("/maquette/sae2_01/Images/icone4.png");
+        drapeau1 =  BombermanController.loadImage("/maquette/sae2_01/Images/drapeau1.png");
+        drapeau2 =  BombermanController.loadImage("/maquette/sae2_01/Images/drapeau2.png");
+        drapeau3 =  BombermanController.loadImage("/maquette/sae2_01/Images/drapeau3.png");
+        drapeau4 =  BombermanController.loadImage("/maquette/sae2_01/Images/drapeau4.png");
     }
 
     @FXML

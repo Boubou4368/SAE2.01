@@ -18,7 +18,7 @@ public class GameStateCustom {
     public Map<Position, Item> hiddenItems = new HashMap<>();
     public Map<Position, Item> visibleItems = new HashMap<>();
     public int level = 1;
-    public String[][] customMap = loadLevel(SoloModeController.fichier);
+    public String[][] customMap = loadLevel(SelectModeController.fichier);
     public static boolean CTF = false;
     public static boolean Item = false;
 
