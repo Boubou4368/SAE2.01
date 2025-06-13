@@ -16,6 +16,7 @@ import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
@@ -248,7 +249,7 @@ public class BombermanController3 implements Initializable {
     }
 
     private void handlePlayerInput(long currentTime, Player player, int playerIndex) {
-        if (!player.getisAlive()) return;
+        if (!player.getisAlive() || player == null) return;
 
         long lastMoveTime = lastMoveTimes[playerIndex];
 
@@ -902,43 +903,51 @@ public class BombermanController3 implements Initializable {
         Label[] bombsLabels = {player1BombsLabel, player2BombsLabel, player3BombsLabel, player4BombsLabel};
 
         for (int i = 0; i < 4; i++) {
-            if (bombsLabels[i] != null) {
+            if (bombsLabels[i] != null && GameStateCustom.players[i] != null) {
                 bombsLabels[i].setText("Bombes: " + GameStateCustom.players[i].getBombsRemaining());
             }
         }
-
 
         if (levelLabel != null) {
             levelLabel.setText("Niveau: " + GameStateCustom.level);
         }
 
         // Affichage des vies
-        if (livesLabel != null) {
+        if (GameStateCustom.players[0] != null && livesLabel != null) {
             livesLabel.setText("x" + GameStateCustom.players[0].getLives());
         }
 
-        if (livesLabel2 != null) {
+        if (GameStateCustom.players[1] != null && livesLabel2 != null) {
             livesLabel2.setText("x" + GameStateCustom.players[1].getLives());
         }
-        if (livesLabel3 != null) {
+
+        if (GameStateCustom.players[2] != null && livesLabel3 != null) {
             livesLabel3.setText("x" + GameStateCustom.players[2].getLives());
         }
-        if (livesLabel4 != null) {
+
+        if (GameStateCustom.players[3] != null && livesLabel4 != null) {
             livesLabel4.setText("x" + GameStateCustom.players[3].getLives());
         }
 
-        // Affichage des bonus
-        if (bonusLabel != null) {
-            String bonusText = String.format("J1 - Feu: %d | Vitesse: %d | Bombe: %d || J2 - Feu: %d | Vitesse: %d | Bombe: %d",
+        // Affichage des bonus pour J1 et J2 uniquement (comme dans ton code d’origine)
+        if (bonusLabel != null &&
+                GameStateCustom.players[0] != null &&
+                GameStateCustom.players[1] != null) {
+
+            String bonusText = String.format(
+                    "J1 - Feu: %d | Vitesse: %d | Bombe: %d || J2 - Feu: %d | Vitesse: %d | Bombe: %d",
                     GameStateCustom.players[0].getFeuBonusCount(),
                     GameStateCustom.players[0].getVitesseBonusCount(),
                     GameStateCustom.players[0].getBombeBonusCount(),
                     GameStateCustom.players[1].getFeuBonusCount(),
                     GameStateCustom.players[1].getVitesseBonusCount(),
-                    GameStateCustom.players[1].getBombeBonusCount());
+                    GameStateCustom.players[1].getBombeBonusCount()
+            );
+
             bonusLabel.setText(bonusText);
         }
     }
+
 
 
     private void render() {
@@ -1050,7 +1059,7 @@ public class BombermanController3 implements Initializable {
         // Affichage des joueurs
         for (int i = 0; i < 4; i++) {
             Player player = GameStateCustom.players[i];
-            if (player.getisAlive()) {
+            if (player != null && player.getisAlive()) {
                 Image playerImage = getPlayerImage(i);
 
                 if (playerImage != null) {
@@ -1154,7 +1163,6 @@ public class BombermanController3 implements Initializable {
 
         return keyMappings;
     }
-
 
 
 }

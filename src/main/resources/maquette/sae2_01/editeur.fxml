@@ -53,6 +53,7 @@
         <HBox>
             <Button text="Sauvegarder" fx:id="saveButton" onAction="#handleSave"/>
             <Button text="Quitter" fx:id="quit" onAction="#onQuit"/>
+            <Button text="Quitter" fx:id="charger" onAction="#charger"/>
         </HBox>
     </bottom>
 </BorderPane>

@@ -13,10 +13,11 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.paint.Color;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.util.Objects;
 
 public class EditeurController {
 
@@ -100,7 +101,6 @@ public class EditeurController {
                         cell.setFill(Color.web("#1B5E20"));
                         break;
                     case "MUR_DESTRUCTIBLE":
-                        System.out.println("rer");
                         cell.setFill(new ImagePattern(brickImage));
                         break;
                     case "JOUEUR_1":
@@ -149,20 +149,30 @@ public class EditeurController {
         }
     }
 
-
     @FXML
-    private void handleSave() {
-        try (FileWriter writer = new FileWriter("niveau_sauvegarde.txt")) {
-            for (String[] row : levelMap) {
-                for (String cell : row) {
-                    writer.write(cell + " ");
+    private void handleSave(ActionEvent event) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Enregistrer le niveau");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Fichier .bbmap", "*.bbmap"));
+        fileChooser.setInitialFileName("niveau_sauvegarde.bbmap");
+
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        File selectedFile = fileChooser.showSaveDialog(stage);
+
+        if (selectedFile != null) {
+            try (FileWriter writer = new FileWriter(selectedFile)) {
+                for (String[] row : levelMap) {
+                    for (String cell : row) {
+                        writer.write(cell + " ");
+                    }
+                    writer.write("\n");
                 }
-                writer.write("\n");
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
+
 
     private void loadGameImages() {
         brickImage = BombermanController.loadImage("/maquette/sae2_01/brique.png");
@@ -202,5 +212,88 @@ public class EditeurController {
         }
     }
 
+    @FXML
+    private void charger(ActionEvent event) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Charger un niveau");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Fichier .bbmap", "*.bbmap"));
+
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        File selectedFile = fileChooser.showOpenDialog(stage);
+
+        if (selectedFile == null) return;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(selectedFile))) {
+            String line;
+            int row = 0;
+            while ((line = reader.readLine()) != null && row < 13) {
+                String[] cells = line.trim().split("\\s+");
+                for (int col = 0; col < Math.min(cells.length, 13); col++) {
+                    levelMap[row][col] = cells[col];
+
+                    // Accède au rectangle existant
+                    for (Node node : gridPane.getChildren()) {
+                        if (GridPane.getRowIndex(node) == row && GridPane.getColumnIndex(node) == col && node instanceof Rectangle cell) {
+
+                            // Applique le style
+                            switch (cells[col]) {
+                                case "MUR_INDESTRUCTIBLE":
+                                    cell.setFill(Color.web("#1B5E20"));
+                                    break;
+                                case "MUR_DESTRUCTIBLE":
+                                    cell.setFill(new ImagePattern(brickImage));
+                                    break;
+                                case "JOUEUR_1":
+                                    cell.setFill(new ImagePattern(joueur1));
+                                    break;
+                                case "JOUEUR_2":
+                                    cell.setFill(new ImagePattern(joueur2));
+                                    break;
+                                case "JOUEUR_3":
+                                    cell.setFill(new ImagePattern(joueur3));
+                                    break;
+                                case "JOUEUR_4":
+                                    cell.setFill(new ImagePattern(joueur4));
+                                    break;
+                                case "DRAPEAU_1":
+                                    cell.setFill(new ImagePattern(drapeau1));
+                                    break;
+                                case "DRAPEAU_2":
+                                    cell.setFill(new ImagePattern(drapeau2));
+                                    break;
+                                case "DRAPEAU_3":
+                                    cell.setFill(new ImagePattern(drapeau3));
+                                    break;
+                                case "DRAPEAU_4":
+                                    cell.setFill(new ImagePattern(drapeau4));
+                                    break;
+                                case "FEU":
+                                    cell.setFill(new ImagePattern(feuImage));
+                                    break;
+                                case "VITESSE":
+                                    cell.setFill(new ImagePattern(vitesseImage));
+                                    break;
+                                case "BOMBE":
+                                    cell.setFill(new ImagePattern(bombeImage));
+                                    break;
+                                case "KICK":
+                                    cell.setFill(new ImagePattern(kickImage));
+                                    break;
+                                case "SKULL":
+                                    cell.setFill(new ImagePattern(skullImage));
+                                    break;
+                                default:
+                                    cell.setFill(Color.web("#2E7D32")); // fond vide
+                            }
+                            break;
+                        }
+                    }
+                }
+                row++;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 }

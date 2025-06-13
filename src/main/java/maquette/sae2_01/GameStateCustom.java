@@ -1,6 +1,7 @@
 package maquette.sae2_01;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -17,16 +18,12 @@ public class GameStateCustom {
     public Map<Position, Item> hiddenItems = new HashMap<>();
     public Map<Position, Item> visibleItems = new HashMap<>();
     public int level = 1;
-    public String[][] customMap = loadLevel("src/main/resources/maquette/sae2_01/niveau2.txt");
+    public String[][] customMap = loadLevel(SoloModeController.fichier);
     public static boolean CTF = false;
     public static boolean Item = false;
 
     GameStateCustom() {
         // Positions de départ aux 4 coins
-        players[0] = new Player(1, 1);                          // Joueur 1
-        players[1] = new Player(GRID_SIZE - 2, GRID_SIZE - 2);   // Joueur 2
-        players[2] = new Player(1, GRID_SIZE - 2);               // Joueur 3
-        players[3] = new Player(GRID_SIZE - 2, 1);               // Joueur 4
 
         initializeMap();
     }
@@ -78,6 +75,28 @@ public class GameStateCustom {
                 }
             }
         }
+        for (int i = 0; i < GRID_SIZE - 2; i++) {
+            for (int j = 0; j < GRID_SIZE - 2; j++) {
+                Position pos = new Position(i+1, j+1);
+
+                // Vérifier que la position n'est pas un mur fixe et n'est pas dans une zone de départ
+                switch (customMap[j][i]) {
+                    case "JOUEUR_1":
+                        players[0] = new Player(pos.getX(),pos.getY());                          // Joueur 1
+                        break;
+                    case "JOUEUR_2":
+                        players[1] = new Player(pos.getX(),pos.getY());   // Joueur 2
+                        break;
+                    case "JOUEUR_3":
+                        players[2] = new Player(pos.getX(),pos.getY());               // Joueur 3
+                        break;
+                    case "JOUEUR_4":
+                        players[3] = new Player(pos.getX(),pos.getY());               // Joueur 4
+                        break;
+                }
+            }
+        }
+
 
         // Placer les objets aléatoirement dans les murs destructibles
         if (!Item) placeItems(availablePositions, random);
@@ -197,7 +216,7 @@ public class GameStateCustom {
         }
         System.out.println("Répartition des objets:");
         for (Map.Entry<ItemType, Integer> entry : itemCount.entrySet()) {
-            System.out.println("  " + entry.getKey() + ": " + entry.getValue());
+            System.out.println("  " + entry.getKey() + "player: " + entry.getValue());
         }
         System.out.println("================");
     }
@@ -271,6 +290,7 @@ public class GameStateCustom {
             }
         }
     }
+
 
 
 }
